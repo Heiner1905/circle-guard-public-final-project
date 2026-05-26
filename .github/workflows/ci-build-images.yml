@@ -1,0 +1,123 @@
+name: CI · Build & Push Images
+
+on:
+  push:
+    branches: [dev, main, master]
+    paths:
+      - "services/**"
+      - "settings.gradle.kts"
+      - "build.gradle.kts"
+      - ".github/workflows/ci-build-images.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment (controls image tag suffix)
+        type: choice
+        options: [dev, stage, prod]
+        default: dev
+
+concurrency:
+  group: ci-build-images-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  resolve-env:
+    name: Resolve environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      image_tag: ${{ steps.env.outputs.image_tag }}
+    steps:
+      - name: Pick environment from branch / dispatch
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            env="${{ inputs.environment }}"
+          else
+            case "${{ github.ref_name }}" in
+              dev)            env="dev" ;;
+              main)           env="stage" ;;
+              master)         env="prod" ;;
+              *)              env="dev" ;;
+            esac
+          fi
+          sha_short="${GITHUB_SHA::7}"
+          echo "environment=${env}" >> "$GITHUB_OUTPUT"
+          echo "image_tag=${env}-${sha_short}" >> "$GITHUB_OUTPUT"
+
+  build-and-push:
+    name: Build & push ${{ matrix.service }}
+    needs: resolve-env
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - circleguard-auth-service
+          - circleguard-identity-service
+          - circleguard-promotion-service
+          - circleguard-notification-service
+          - circleguard-form-service
+          - circleguard-file-service
+          - circleguard-gateway-service
+          - circleguard-dashboard-service
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Skip if Dockerfile is missing
+        id: precheck
+        run: |
+          if [ ! -f "services/${{ matrix.service }}/Dockerfile" ]; then
+            echo "::notice ::No Dockerfile for ${{ matrix.service }} yet (owned by Karold). Skipping image build."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up JDK 21
+        if: steps.precheck.outputs.skip != 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle (cached)
+        if: steps.precheck.outputs.skip != 'true'
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build service JAR
+        if: steps.precheck.outputs.skip != 'true'
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :services:${{ matrix.service }}:bootJar --no-daemon --stacktrace
+
+      - name: Set up Docker Buildx
+        if: steps.precheck.outputs.skip != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to ACR
+        if: steps.precheck.outputs.skip != 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build & push image
+        if: steps.precheck.outputs.skip != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: services/${{ matrix.service }}
+          file: services/${{ matrix.service }}/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:${{ needs.resolve-env.outputs.image_tag }}
+            ${{ secrets.ACR_LOGIN_SERVER }}/${{ matrix.service }}:${{ needs.resolve-env.outputs.environment }}-latest
+          provenance: false
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,scope=${{ matrix.service }},mode=max
