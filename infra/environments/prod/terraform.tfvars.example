@@ -1,0 +1,31 @@
+###############################################################################
+# Copy this file to terraform.tfvars and fill in the secret values before
+# running `terraform plan/apply`. terraform.tfvars is gitignored so secrets
+# never leave your laptop.
+###############################################################################
+
+# --- Azure (production SKUs) ------------------------------------------------
+azure_location = "eastus"
+node_vm_size   = "Standard_D2s_v5"
+node_min_count = 3
+node_max_count = 6
+acr_name       = "acrcircleguardprod"
+
+# In prod consider promoting ACR to Premium for geo-replication and content trust:
+# acr_sku = "Premium"
+
+# --- Middleware secrets (REQUIRED, MUST be strong) --------------------------
+postgres_password   = "REPLACE-WITH-VAULT-VALUE"
+neo4j_password      = "REPLACE-WITH-VAULT-VALUE"
+redis_password      = "REPLACE-WITH-VAULT-VALUE"
+ldap_admin_password = "REPLACE-WITH-VAULT-VALUE"
+
+middleware_persistence_size = "32Gi"
+
+# --- AWS multi-cloud --------------------------------------------------------
+# Off by default. For prod multi-cloud, expect significant cost (~$72/mo just for
+# EKS control plane). Enable only when actively demoing or running DR drills.
+enable_aws             = false
+aws_region             = "us-east-1"
+aws_node_instance_type = "t3.medium"
+aws_node_desired_size  = 3
