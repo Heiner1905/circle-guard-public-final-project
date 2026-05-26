@@ -1,0 +1,26 @@
+###############################################################################
+# Copy this file to terraform.tfvars and fill in the secret values before
+# running `terraform plan/apply`. terraform.tfvars is gitignored so secrets
+# never leave your laptop.
+###############################################################################
+
+# --- Azure (medium SKUs for stage) ------------------------------------------
+azure_location = "eastus"
+node_vm_size   = "Standard_B2ms"
+node_min_count = 2
+node_max_count = 4
+acr_name       = "acrcircleguardstage"
+
+# --- Middleware secrets (REQUIRED) ------------------------------------------
+postgres_password   = "change-me-stage-pg"
+neo4j_password      = "change-me-stage-neo4j"
+redis_password      = "change-me-stage-redis"
+ldap_admin_password = "change-me-stage-ldap"
+
+middleware_persistence_size = "16Gi"
+
+# --- AWS multi-cloud (off by default) ---------------------------------------
+enable_aws             = false
+aws_region             = "us-east-1"
+aws_node_instance_type = "t3.medium"
+aws_node_desired_size  = 2
