@@ -1,0 +1,16 @@
+{{- range $serviceName, $service := .Values.services }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $service.fullName }}-config
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "circleguard.serviceLabels" (dict "root" $ "serviceName" $serviceName "service" $service) | nindent 4 }}
+data:
+  SPRING_PROFILES_ACTIVE: {{ $.Values.global.springProfilesActive | quote }}
+  SERVER_PORT: {{ $service.port | quote }}
+  {{- range $key, $value := $service.config }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}

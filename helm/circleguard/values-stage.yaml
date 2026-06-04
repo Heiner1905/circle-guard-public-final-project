@@ -1,0 +1,34 @@
+global:
+  environment: stage
+  springProfilesActive: stage
+  ingress:
+    host: stage.circleguard.edu
+
+defaults:
+  replicas: 2
+
+services:
+  auth-service:
+    image:
+      tag: stage
+  identity-service:
+    image:
+      tag: stage
+  promotion-service:
+    image:
+      tag: stage
+  notification-service:
+    image:
+      tag: stage
+  form-service:
+    image:
+      tag: stage
+  file-service:
+    image:
+      tag: stage
+  gateway-service:
+    image:
+      tag: stage
+  dashboard-service:
+    image:
+      tag: stage
