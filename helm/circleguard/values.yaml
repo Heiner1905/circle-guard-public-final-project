@@ -1,0 +1,211 @@
+global:
+  environment: dev
+  namespace: circleguard
+  imageRegistry: "<acr-login-server>"
+  imagePullPolicy: IfNotPresent
+  springProfilesActive: dev
+  middlewareNamespace: circleguard-middleware
+  dns:
+    postgresql: postgresql.circleguard-middleware.svc.cluster.local
+    neo4j: neo4j.circleguard-middleware.svc.cluster.local
+    kafka: kafka.circleguard-middleware.svc.cluster.local:9092
+    redis: redis.circleguard-middleware.svc.cluster.local
+    ldap: ldap://openldap.circleguard-middleware.svc.cluster.local:389
+  ingress:
+    enabled: true
+    className: nginx
+    host: circleguard.local
+    tls: []
+
+defaults:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  probes:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+services:
+  auth-service:
+    fullName: circleguard-auth-service
+    image:
+      repository: ""
+      tag: latest
+    port: 8180
+    ingress:
+      enabled: false
+    config:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql.circleguard-middleware.svc.cluster.local:5432/circleguard_auth
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_LDAP_URLS: ldap://openldap.circleguard-middleware.svc.cluster.local:389
+      SPRING_LDAP_BASE: dc=circleguard,dc=edu
+      SPRING_LDAP_USERNAME: cn=admin,dc=circleguard,dc=edu
+      JWT_EXPIRATION: "3600000"
+      QR_EXPIRATION: "300"
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,prometheus,circuitbreakers
+      MANAGEMENT_HEALTH_CIRCUITBREAKERS_ENABLED: "true"
+    secret:
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_LDAP_PASSWORD: admin
+      JWT_SECRET: my-super-secret-dev-key-32-chars-long-12345678
+      QR_SECRET: my-qr-secret-key-for-dev-1234567890
+
+  identity-service:
+    fullName: circleguard-identity-service
+    image:
+      repository: ""
+      tag: latest
+    port: 8083
+    ingress:
+      enabled: false
+    config:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql.circleguard-middleware.svc.cluster.local:5432/circleguard_identity
+      SPRING_DATASOURCE_USERNAME: admin
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,prometheus
+    secret:
+      SPRING_DATASOURCE_PASSWORD: password
+      VAULT_SECRET: 746573742d7365637265742d33322d63686172732d6c6f6e672d313233343536
+      VAULT_SALT: deadbeef
+      VAULT_HASH_SALT: "12345678"
+      JWT_SECRET: my-super-secret-dev-key-32-chars-long-12345678
+
+  promotion-service:
+    fullName: circleguard-promotion-service
+    image:
+      repository: ""
+      tag: latest
+    port: 8088
+    ingress:
+      enabled: false
+    config:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql.circleguard-middleware.svc.cluster.local:5432/circleguard_promotion
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_NEO4J_URI: bolt://neo4j.circleguard-middleware.svc.cluster.local:7687
+      SPRING_NEO4J_AUTHENTICATION_USERNAME: neo4j
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka.circleguard-middleware.svc.cluster.local:9092
+      SPRING_DATA_REDIS_HOST: redis.circleguard-middleware.svc.cluster.local
+      SPRING_DATA_REDIS_PORT: "6379"
+      JWT_EXPIRATION: "3600000"
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,prometheus,circuitbreakers
+      MANAGEMENT_HEALTH_CIRCUITBREAKERS_ENABLED: "true"
+    secret:
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_NEO4J_AUTHENTICATION_PASSWORD: password
+      JWT_SECRET: my-super-secret-dev-key-32-chars-long-12345678
+
+  notification-service:
+    fullName: circleguard-notification-service
+    image:
+      repository: ""
+      tag: latest
+    port: 8082
+    ingress:
+      enabled: false
+    config:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka.circleguard-middleware.svc.cluster.local:9092
+      SPRING_MAIL_HOST: mail.circleguard-middleware.svc.cluster.local
+      SPRING_MAIL_PORT: "25"
+      AUTH_API_URL: http://circleguard-auth-service:8180
+      IDENTITY_API_URL: http://circleguard-identity-service:8083
+      LMS_API_URL: https://lms.university.edu/api/v1
+      ROOM_BOOKING_API_URL: https://facilities.university.edu/api/v1/rooms
+      PUSH_GOTIFY_URL: http://gotify.circleguard-middleware.svc.cluster.local:8080
+      TWILIO_FROM_NUMBER: "+15550000000"
+      NOTIFICATION_URL_TESTING: https://circleguard.example.com/testing
+      NOTIFICATION_URL_ISOLATION: https://circleguard.example.com/isolation
+      NOTIFICATION_URL_GUIDELINES: circleguard://guidelines
+      JWT_EXPIRATION: "3600000"
+      QR_EXPIRATION: "300"
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,prometheus,circuitbreakers
+      MANAGEMENT_HEALTH_CIRCUITBREAKERS_ENABLED: "true"
+    secret:
+      JWT_SECRET: my-super-secret-dev-key-32-chars-long-12345678
+      QR_SECRET: my-qr-secret-key-for-dev-1234567890
+      TWILIO_ACCOUNT_SID: AC_MOCK_SID
+      TWILIO_AUTH_TOKEN: MOCK_TOKEN
+      PUSH_GOTIFY_TOKEN: MOCK_TOKEN
+
+  form-service:
+    fullName: circleguard-form-service
+    image:
+      repository: ""
+      tag: latest
+    port: 8086
+    ingress:
+      enabled: false
+    config:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql.circleguard-middleware.svc.cluster.local:5432/circleguard_form
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka.circleguard-middleware.svc.cluster.local:9092
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,prometheus
+    secret:
+      SPRING_DATASOURCE_PASSWORD: password
+
+  file-service:
+    fullName: circleguard-file-service
+    image:
+      repository: ""
+      tag: latest
+    port: 8085
+    ingress:
+      enabled: false
+    config:
+      AWS_S3_ENDPOINT: http://minio.circleguard-middleware.svc.cluster.local:9000
+      AWS_S3_BUCKET: circleguard-files
+      AWS_REGION: us-east-1
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,prometheus
+    secret:
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+
+  gateway-service:
+    fullName: circleguard-gateway-service
+    image:
+      repository: ""
+      tag: latest
+    port: 8087
+    ingress:
+      enabled: true
+      path: /
+    config:
+      SPRING_DATA_REDIS_HOST: redis.circleguard-middleware.svc.cluster.local
+      SPRING_DATA_REDIS_PORT: "6379"
+      JWT_EXPIRATION: "3600000"
+      QR_EXPIRATION: "300"
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,prometheus
+    secret:
+      JWT_SECRET: my-super-secret-dev-key-32-chars-long-12345678
+      QR_SECRET: my-qr-secret-key-for-dev-1234567890
+
+  dashboard-service:
+    fullName: circleguard-dashboard-service
+    image:
+      repository: ""
+      tag: latest
+    port: 8084
+    ingress:
+      enabled: true
+      path: /dashboard
+    config:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgresql.circleguard-middleware.svc.cluster.local:5432/circleguard_dashboard
+      SPRING_DATASOURCE_USERNAME: admin
+      CIRCLEGUARD_PROMOTION_SERVICE_URL: http://circleguard-promotion-service:8088
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,prometheus,circuitbreakers
+      MANAGEMENT_HEALTH_CIRCUITBREAKERS_ENABLED: "true"
+    secret:
+      SPRING_DATASOURCE_PASSWORD: password
