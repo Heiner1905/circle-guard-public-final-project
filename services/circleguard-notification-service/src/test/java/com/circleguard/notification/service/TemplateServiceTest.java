@@ -1,15 +1,14 @@
 package com.circleguard.notification.service;
 
+import freemarker.template.Configuration;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.util.ReflectionTestUtils;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
 public class TemplateServiceTest {
 
-    @Autowired
-    private TemplateService templateService;
+    private final TemplateService templateService = createTemplateService();
 
     @Test
     void testEmailTemplateGeneration() {
@@ -39,5 +38,16 @@ public class TemplateServiceTest {
         String content = templateService.generateSmsContent("SUSPECT");
         assertThat(content).contains("SUSPECT");
         assertThat(content).contains("check your email");
+    }
+
+    private TemplateService createTemplateService() {
+        Configuration configuration = new Configuration(Configuration.VERSION_2_3_32);
+        configuration.setClassLoaderForTemplateLoading(getClass().getClassLoader(), "templates");
+
+        TemplateService service = new TemplateService(configuration);
+        ReflectionTestUtils.setField(service, "testingUrl", "https://circleguard.example.com/testing");
+        ReflectionTestUtils.setField(service, "isolationUrl", "https://circleguard.example.com/isolation");
+        ReflectionTestUtils.setField(service, "guidelinesDeepLink", "circleguard://guidelines");
+        return service;
     }
 }
