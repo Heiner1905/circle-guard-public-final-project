@@ -3,6 +3,9 @@
 eck-operator:
   enabled: false
 
+# ----------------------------------------------------------------------------
+# Elasticsearch (storage + index backend for the ELK pipeline)
+# ----------------------------------------------------------------------------
 eck-elasticsearch:
   enabled: true
   fullnameOverride: circleguard-elasticsearch
@@ -42,6 +45,9 @@ eck-elasticsearch:
               requests:
                 storage: ${es_storage_size}
 
+# ----------------------------------------------------------------------------
+# Kibana (visualization layer for Elasticsearch indices)
+# ----------------------------------------------------------------------------
 eck-kibana:
   enabled: true
   fullnameOverride: circleguard-kibana
@@ -61,3 +67,151 @@ eck-kibana:
               limits:
                 cpu: ${kibana_cpu_limit}
                 memory: ${kibana_mem_limit}
+
+# ----------------------------------------------------------------------------
+# Logstash — receives Filebeat events on port 5044, parses the LogstashEncoder
+# JSON envelope, and writes one document per log line to Elasticsearch under
+# index "circleguard-logs-YYYY.MM.dd". elasticsearchRefs auto-mounts ES certs
+# and credentials as env vars (CIRCLEGUARD_ES_ES_HOSTS / _USER / _PASSWORD).
+# ----------------------------------------------------------------------------
+eck-logstash:
+  enabled: true
+  fullnameOverride: circleguard-logstash
+  version: ${es_version}
+  spec:
+    count: 1
+    elasticsearchRefs:
+      - name: circleguard-elasticsearch
+        clusterName: circleguard-es
+    podTemplate:
+      spec:
+        containers:
+          - name: logstash
+            resources:
+              requests:
+                cpu: ${logstash_cpu_request}
+                memory: ${logstash_mem_request}
+              limits:
+                cpu: ${logstash_cpu_limit}
+                memory: ${logstash_mem_limit}
+    services:
+      - name: beats
+        service:
+          spec:
+            type: ClusterIP
+            ports:
+              - name: beats
+                port: 5044
+                protocol: TCP
+                targetPort: 5044
+    pipelines:
+      - pipeline.id: main
+        config.string: |
+          input {
+            beats {
+              port => 5044
+            }
+          }
+          filter {
+            # The JSON envelope produced by logstash-logback-encoder lives in
+            # the [message] field after Filebeat unwraps the container runtime
+            # log line. Parse it into structured fields.
+            if [message] =~ /^\s*\{/ {
+              json {
+                source => "message"
+                target => "app"
+                skip_on_invalid_json => true
+              }
+              if [app][service] { mutate { add_field => { "service" => "%%{[app][service]}" } } }
+              if [app][env]     { mutate { add_field => { "env"     => "%%{[app][env]}"     } } }
+              if [app][level]   { mutate { add_field => { "level"   => "%%{[app][level]}"   } } }
+              if [app][traceId] { mutate { add_field => { "traceId" => "%%{[app][traceId]}" } } }
+              if [app][spanId]  { mutate { add_field => { "spanId"  => "%%{[app][spanId]}"  } } }
+              if [app][userId]  { mutate { add_field => { "userId"  => "%%{[app][userId]}"  } } }
+              if [app]["@timestamp"] {
+                date {
+                  match => [ "[app][@timestamp]", "ISO8601" ]
+                  target => "@timestamp"
+                }
+              }
+            }
+          }
+          output {
+            elasticsearch {
+              hosts    => [ "$${CIRCLEGUARD_ES_ES_HOSTS}" ]
+              user     => "$${CIRCLEGUARD_ES_ES_USER}"
+              password => "$${CIRCLEGUARD_ES_ES_PASSWORD}"
+              ssl_certificate_authorities => "/mnt/elastic-internal/es-certs/circleguard-es/ca.crt"
+              index    => "circleguard-logs-%%{+YYYY.MM.dd}"
+            }
+          }
+
+# ----------------------------------------------------------------------------
+# Filebeat (DaemonSet) — tails /var/log/containers/*.log on every node and
+# ships events to Logstash. Auto-discovers Kubernetes metadata so each event
+# carries pod / namespace / container labels for filtering in Kibana.
+# Output points at Logstash, not Elasticsearch directly, to keep the ELK
+# pipeline as Filebeat → Logstash → Elasticsearch → Kibana.
+# ----------------------------------------------------------------------------
+eck-beats:
+  enabled: true
+  fullnameOverride: circleguard-filebeat
+  spec:
+    type: filebeat
+    version: ${es_version}
+    config:
+      filebeat.autodiscover:
+        providers:
+          - type: kubernetes
+            node: $${NODE_NAME}
+            hints.enabled: true
+            hints.default_config:
+              type: container
+              paths:
+                - /var/log/containers/*$${data.kubernetes.container.id}.log
+      processors:
+        - add_cloud_metadata: {}
+        - add_host_metadata: {}
+      output.logstash:
+        hosts: ["circleguard-logstash-ls-beats.${namespace}.svc.cluster.local:5044"]
+    daemonSet:
+      podTemplate:
+        spec:
+          serviceAccountName: filebeat
+          automountServiceAccountToken: true
+          terminationGracePeriodSeconds: 30
+          dnsPolicy: ClusterFirstWithHostNet
+          hostNetwork: true
+          containers:
+            - name: filebeat
+              securityContext:
+                runAsUser: 0
+              resources:
+                requests:
+                  cpu: ${filebeat_cpu_request}
+                  memory: ${filebeat_mem_request}
+                limits:
+                  cpu: ${filebeat_cpu_limit}
+                  memory: ${filebeat_mem_limit}
+              env:
+                - name: NODE_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: spec.nodeName
+              volumeMounts:
+                - name: varlogcontainers
+                  mountPath: /var/log/containers
+                - name: varlogpods
+                  mountPath: /var/log/pods
+                - name: varlibdockercontainers
+                  mountPath: /var/lib/docker/containers
+          volumes:
+            - name: varlogcontainers
+              hostPath:
+                path: /var/log/containers
+            - name: varlogpods
+              hostPath:
+                path: /var/log/pods
+            - name: varlibdockercontainers
+              hostPath:
+                path: /var/lib/docker/containers

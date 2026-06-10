@@ -148,3 +148,49 @@ variable "kibana_mem_limit" {
   type    = string
   default = "1Gi"
 }
+
+# ---------------------------------------------------------------------------
+# Logstash (ELK pipeline parser: Filebeat → Logstash → Elasticsearch)
+# ---------------------------------------------------------------------------
+variable "logstash_cpu_request" {
+  type    = string
+  default = "200m"
+}
+
+variable "logstash_mem_request" {
+  type    = string
+  default = "1Gi"
+}
+
+variable "logstash_cpu_limit" {
+  type    = string
+  default = "1"
+}
+
+variable "logstash_mem_limit" {
+  type    = string
+  default = "1536Mi"
+}
+
+# ---------------------------------------------------------------------------
+# Filebeat (DaemonSet — one pod per node tailing /var/log/containers)
+# ---------------------------------------------------------------------------
+variable "filebeat_cpu_request" {
+  type    = string
+  default = "100m"
+}
+
+variable "filebeat_mem_request" {
+  type    = string
+  default = "128Mi"
+}
+
+variable "filebeat_cpu_limit" {
+  type    = string
+  default = "500m"
+}
+
+variable "filebeat_mem_limit" {
+  type    = string
+  default = "256Mi"
+}

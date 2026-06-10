@@ -149,19 +149,98 @@ resource "helm_release" "eck_stack" {
 
   values = [
     templatefile("${path.module}/values/eck-stack.yaml.tftpl", {
-      es_version         = var.elastic_version
-      es_node_count      = var.elasticsearch_node_count
-      es_storage_size    = var.elasticsearch_storage_size
-      es_cpu_request     = var.elasticsearch_cpu_request
-      es_mem_request     = var.elasticsearch_mem_request
-      es_cpu_limit       = var.elasticsearch_cpu_limit
-      es_mem_limit       = var.elasticsearch_mem_limit
-      kibana_cpu_request = var.kibana_cpu_request
-      kibana_mem_request = var.kibana_mem_request
-      kibana_cpu_limit   = var.kibana_cpu_limit
-      kibana_mem_limit   = var.kibana_mem_limit
+      namespace            = local.ns
+      es_version           = var.elastic_version
+      es_node_count        = var.elasticsearch_node_count
+      es_storage_size      = var.elasticsearch_storage_size
+      es_cpu_request       = var.elasticsearch_cpu_request
+      es_mem_request       = var.elasticsearch_mem_request
+      es_cpu_limit         = var.elasticsearch_cpu_limit
+      es_mem_limit         = var.elasticsearch_mem_limit
+      kibana_cpu_request   = var.kibana_cpu_request
+      kibana_mem_request   = var.kibana_mem_request
+      kibana_cpu_limit     = var.kibana_cpu_limit
+      kibana_mem_limit     = var.kibana_mem_limit
+      logstash_cpu_request = var.logstash_cpu_request
+      logstash_mem_request = var.logstash_mem_request
+      logstash_cpu_limit   = var.logstash_cpu_limit
+      logstash_mem_limit   = var.logstash_mem_limit
+      filebeat_cpu_request = var.filebeat_cpu_request
+      filebeat_mem_request = var.filebeat_mem_request
+      filebeat_cpu_limit   = var.filebeat_cpu_limit
+      filebeat_mem_limit   = var.filebeat_mem_limit
     })
   ]
 
-  depends_on = [helm_release.eck_operator]
+  depends_on = [
+    helm_release.eck_operator,
+    kubernetes_cluster_role_binding.filebeat,
+  ]
+}
+
+# ----------------------------------------------------------------------------
+# RBAC for Filebeat — the Kubernetes autodiscover provider needs read access
+# to pods / namespaces / nodes so it can enrich each log event with metadata.
+# Created only when ELK is enabled; namespaced to the logging stack's NS.
+# ----------------------------------------------------------------------------
+
+resource "kubernetes_service_account" "filebeat" {
+  count = var.enable_elk ? 1 : 0
+
+  metadata {
+    name      = "filebeat"
+    namespace = local.ns
+    labels = {
+      "app.kubernetes.io/name"    = "filebeat"
+      "app.kubernetes.io/part-of" = "circleguard"
+    }
+  }
+
+  depends_on = [kubernetes_namespace.logging]
+}
+
+resource "kubernetes_cluster_role" "filebeat" {
+  count = var.enable_elk ? 1 : 0
+
+  metadata {
+    name = "circleguard-filebeat"
+    labels = {
+      "app.kubernetes.io/part-of" = "circleguard"
+    }
+  }
+
+  rule {
+    api_groups = [""]
+    resources  = ["namespaces", "pods", "nodes"]
+    verbs      = ["get", "list", "watch"]
+  }
+
+  rule {
+    api_groups = ["apps"]
+    resources  = ["replicasets"]
+    verbs      = ["get", "list", "watch"]
+  }
+}
+
+resource "kubernetes_cluster_role_binding" "filebeat" {
+  count = var.enable_elk ? 1 : 0
+
+  metadata {
+    name = "circleguard-filebeat"
+    labels = {
+      "app.kubernetes.io/part-of" = "circleguard"
+    }
+  }
+
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = kubernetes_cluster_role.filebeat[0].metadata[0].name
+  }
+
+  subject {
+    kind      = "ServiceAccount"
+    name      = kubernetes_service_account.filebeat[0].metadata[0].name
+    namespace = local.ns
+  }
 }

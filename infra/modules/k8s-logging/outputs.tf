@@ -22,3 +22,13 @@ output "kibana_service" {
   description = "In-cluster DNS of the Kibana service when ELK is enabled."
   value       = var.enable_elk ? "https://circleguard-kibana-kb-http.${local.ns}.svc.cluster.local:5601" : null
 }
+
+output "logstash_beats_service" {
+  description = "In-cluster DNS of the Logstash beats input (Filebeat target) when ELK is enabled."
+  value       = var.enable_elk ? "circleguard-logstash-ls-beats.${local.ns}.svc.cluster.local:5044" : null
+}
+
+output "filebeat_status" {
+  description = "Name of the Filebeat Beat CR when ELK is enabled. Verify the DaemonSet with kubectl get ds circleguard-filebeat-beat-filebeat in the logging namespace."
+  value       = var.enable_elk ? "circleguard-filebeat" : null
+}
