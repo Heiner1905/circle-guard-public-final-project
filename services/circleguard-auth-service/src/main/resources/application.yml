@@ -54,3 +54,11 @@ management:
 circleguard:
   identity-service:
     url: ${IDENTITY_API_URL:http://circleguard-identity-service:8083}
+
+# Logging (US-11) -----------------------------------------------------------
+logging:
+  level:
+    root: INFO
+    com.circleguard: INFO
+  pattern:
+    correlation: "[%X{traceId:-},%X{spanId:-}] "

@@ -133,6 +133,23 @@ module "observability" {
 }
 
 # ----------------------------------------------------------------------------
+# Logging stack (Loki + Promtail, optional ECK).
+# ----------------------------------------------------------------------------
+
+module "logging" {
+  source = "../../modules/k8s-logging"
+  count  = var.enable_logging ? 1 : 0
+
+  namespace            = var.observability_namespace
+  create_namespace     = false
+  loki_retention_hours = var.loki_retention_hours
+  loki_storage_size    = var.loki_storage_size
+  enable_elk           = var.enable_elk
+
+  depends_on = [module.observability]
+}
+
+# ----------------------------------------------------------------------------
 # AWS multi-cloud (optional, gated by enable_aws). Modules use count so the
 # whole AWS stack is skipped when the flag is false.
 # ----------------------------------------------------------------------------

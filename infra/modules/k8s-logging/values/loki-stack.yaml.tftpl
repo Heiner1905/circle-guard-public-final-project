@@ -1,0 +1,77 @@
+# Loki single-binary: simplest mode for clusters without an object store.
+# For prod with S3/Blob, swap to the dedicated grafana/loki chart with
+# read/write/backend deployments and a chunks bucket.
+loki:
+  enabled: true
+  isDefault: false
+  persistence:
+    enabled: true
+    size: ${loki_storage_size}
+  config:
+    auth_enabled: false
+    limits_config:
+      retention_period: ${loki_retention_hours}h
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+      ingestion_rate_mb: 8
+      ingestion_burst_size_mb: 16
+    compactor:
+      working_directory: /data/loki/compactor
+      shared_store: filesystem
+      retention_enabled: true
+      retention_delete_delay: 2h
+      retention_delete_worker_count: 150
+    table_manager:
+      retention_deletes_enabled: true
+      retention_period: ${loki_retention_hours}h
+  resources:
+    requests:
+      cpu: ${loki_cpu_request}
+      memory: ${loki_mem_request}
+    limits:
+      cpu: ${loki_cpu_limit}
+      memory: ${loki_mem_limit}
+
+# Promtail tails container logs on every node and pushes them to Loki.
+# Pipeline stages parse the JSON envelope produced by our Logback encoder
+# so level/service/traceId become Loki labels (cheap label cardinality).
+promtail:
+  enabled: true
+  config:
+    clients:
+      - url: http://loki-stack:3100/loki/api/v1/push
+    snippets:
+      pipelineStages:
+        - cri: {}
+        - json:
+            expressions:
+              level: level
+              service: service
+              traceId: traceId
+              spanId: spanId
+        - labels:
+            level:
+            service:
+  resources:
+    requests:
+      cpu: ${promtail_cpu_request}
+      memory: ${promtail_mem_request}
+    limits:
+      cpu: ${promtail_cpu_limit}
+      memory: ${promtail_mem_limit}
+
+# Grafana is already provided by kube-prometheus-stack (US-10).
+grafana:
+  enabled: false
+
+# Filebeat / Fluent Bit / Logstash subcharts unused — Promtail is enough.
+fluent-bit:
+  enabled: false
+filebeat:
+  enabled: false
+logstash:
+  enabled: false
+
+# Optional Prometheus subchart disabled (kube-prometheus-stack owns metrics).
+prometheus:
+  enabled: false

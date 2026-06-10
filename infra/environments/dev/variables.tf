@@ -229,3 +229,28 @@ variable "dashboards_path" {
   type        = string
   default     = ""
 }
+
+# Logging (US-11) ------------------------------------------------------------
+variable "enable_logging" {
+  description = "Toggle to install the Loki + Promtail logging stack."
+  type        = bool
+  default     = true
+}
+
+variable "loki_retention_hours" {
+  description = "Hours of log retention before Loki compactor deletes chunks."
+  type        = number
+  default     = 72
+}
+
+variable "loki_storage_size" {
+  description = "PVC size for Loki chunks/index."
+  type        = string
+  default     = "8Gi"
+}
+
+variable "enable_elk" {
+  description = "Toggle the optional Elasticsearch + Kibana stack (ECK). Off in dev to save memory."
+  type        = bool
+  default     = false
+}

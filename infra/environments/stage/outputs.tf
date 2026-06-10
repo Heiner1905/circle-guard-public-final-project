@@ -38,6 +38,16 @@ output "prometheus_service" {
   value       = var.enable_observability ? module.observability[0].prometheus_service : null
 }
 
+output "loki_service" {
+  description = "In-cluster DNS of Loki (null when disabled). Add as Grafana datasource."
+  value       = var.enable_logging ? module.logging[0].loki_service : null
+}
+
+output "kibana_service" {
+  description = "In-cluster DNS of Kibana (null when ELK is disabled)."
+  value       = var.enable_logging && var.enable_elk ? module.logging[0].kibana_service : null
+}
+
 output "aws_eks_cluster" {
   description = "Name of the EKS cluster (only when enable_aws=true)."
   value       = var.enable_aws ? module.aws_eks[0].cluster_name : null

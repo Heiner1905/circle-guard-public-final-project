@@ -24,6 +24,12 @@ enable_observability    = true
 grafana_admin_password  = "change-me-stage-grafana"
 dashboards_path         = ""
 
+# --- Logging (US-11) --------------------------------------------------------
+enable_logging       = true
+loki_retention_hours = 168
+loki_storage_size    = "16Gi"
+enable_elk           = false
+
 # --- AWS multi-cloud (off by default) ---------------------------------------
 enable_aws             = false
 aws_region             = "us-east-1"

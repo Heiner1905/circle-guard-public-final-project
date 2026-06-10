@@ -1,0 +1,63 @@
+# The operator subchart is disabled — we install eck-operator separately so
+# the CRDs land before this release renders the Elasticsearch + Kibana CRs.
+eck-operator:
+  enabled: false
+
+eck-elasticsearch:
+  enabled: true
+  fullnameOverride: circleguard-elasticsearch
+  version: ${es_version}
+  nodeSets:
+    - name: default
+      count: ${es_node_count}
+      config:
+        node.store.allow_mmap: false
+        xpack.security.enabled: true
+        xpack.security.authc:
+          anonymous:
+            username: anonymous
+            roles: superuser
+            authz_exception: false
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                requests:
+                  cpu: ${es_cpu_request}
+                  memory: ${es_mem_request}
+                limits:
+                  cpu: ${es_cpu_limit}
+                  memory: ${es_mem_limit}
+              env:
+                - name: ES_JAVA_OPTS
+                  value: "-Xms1g -Xmx1g"
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: ${es_storage_size}
+
+eck-kibana:
+  enabled: true
+  fullnameOverride: circleguard-kibana
+  version: ${es_version}
+  spec:
+    count: 1
+    elasticsearchRef:
+      name: circleguard-elasticsearch
+    podTemplate:
+      spec:
+        containers:
+          - name: kibana
+            resources:
+              requests:
+                cpu: ${kibana_cpu_request}
+                memory: ${kibana_mem_request}
+              limits:
+                cpu: ${kibana_cpu_limit}
+                memory: ${kibana_mem_limit}

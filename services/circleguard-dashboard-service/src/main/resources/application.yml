@@ -41,3 +41,11 @@ management:
 circleguard:
   promotion-service:
     url: ${CIRCLEGUARD_PROMOTION_SERVICE_URL:http://circleguard-promotion-service:8088}
+
+# Logging (US-11) -----------------------------------------------------------
+logging:
+  level:
+    root: INFO
+    com.circleguard: INFO
+  pattern:
+    correlation: "[%X{traceId:-},%X{spanId:-}] "

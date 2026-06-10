@@ -26,6 +26,12 @@ grafana_admin_password   = "change-me-dev-grafana"
 # dashboards_path = "/home/<you>/.../circle-guard.../observability/dashboards"
 dashboards_path          = ""
 
+# --- Logging (US-11) --------------------------------------------------------
+enable_logging       = true
+loki_retention_hours = 72
+loki_storage_size    = "8Gi"
+enable_elk           = false
+
 # --- AWS multi-cloud (off by default, flip to true to provision EKS+ECR) ----
 enable_aws             = false
 aws_region             = "us-east-1"
