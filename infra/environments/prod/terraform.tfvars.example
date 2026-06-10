@@ -27,6 +27,14 @@ enable_observability    = true
 grafana_admin_password  = "REPLACE-WITH-VAULT-VALUE"
 dashboards_path         = ""
 
+# --- Logging (US-11) --------------------------------------------------------
+# ELK off by default in prod too: ~4 GB RAM just for Elasticsearch. Flip on
+# only when central log search is actively needed beyond Grafana/Loki.
+enable_logging       = true
+loki_retention_hours = 336
+loki_storage_size    = "32Gi"
+enable_elk           = false
+
 # --- AWS multi-cloud --------------------------------------------------------
 # Off by default. For prod multi-cloud, expect significant cost (~$72/mo just for
 # EKS control plane). Enable only when actively demoing or running DR drills.

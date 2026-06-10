@@ -61,3 +61,11 @@ circleguard:
     simulation:
       enabled: ${CIRCLEGUARD_METRICS_SIMULATION_ENABLED:false}
       interval-ms: 45000
+
+# Logging (US-11) -----------------------------------------------------------
+logging:
+  level:
+    root: INFO
+    com.circleguard: INFO
+  pattern:
+    correlation: "[%X{traceId:-},%X{spanId:-}] "
