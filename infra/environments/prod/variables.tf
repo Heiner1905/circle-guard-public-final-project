@@ -180,3 +180,52 @@ variable "aws_node_desired_size" {
   type        = number
   default     = 2
 }
+
+# Observability (US-10) -------------------------------------------------------
+variable "enable_observability" {
+  description = "Toggle to install the kube-prometheus-stack + Grafana dashboards."
+  type        = bool
+  default     = true
+}
+
+variable "observability_namespace" {
+  description = "Namespace for the observability stack."
+  type        = string
+  default     = "circleguard-observability"
+}
+
+variable "grafana_admin_user" {
+  description = "Grafana admin username."
+  type        = string
+  default     = "admin"
+}
+
+variable "grafana_admin_password" {
+  description = "Grafana admin password (set via CI secret)."
+  type        = string
+  sensitive   = true
+}
+
+variable "prometheus_retention" {
+  description = "Prometheus sample retention window."
+  type        = string
+  default     = "30d"
+}
+
+variable "prometheus_storage_size" {
+  description = "PVC size for Prometheus TSDB."
+  type        = string
+  default     = "32Gi"
+}
+
+variable "grafana_persistence_size" {
+  description = "PVC size for Grafana data."
+  type        = string
+  default     = "10Gi"
+}
+
+variable "dashboards_path" {
+  description = "Absolute path to a directory of Grafana dashboard JSONs to bundle."
+  type        = string
+  default     = ""
+}

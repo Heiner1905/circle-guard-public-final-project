@@ -19,6 +19,11 @@ ldap_admin_password = "change-me-stage-ldap"
 
 middleware_persistence_size = "16Gi"
 
+# --- Observability (US-10) --------------------------------------------------
+enable_observability    = true
+grafana_admin_password  = "change-me-stage-grafana"
+dashboards_path         = ""
+
 # --- AWS multi-cloud (off by default) ---------------------------------------
 enable_aws             = false
 aws_region             = "us-east-1"

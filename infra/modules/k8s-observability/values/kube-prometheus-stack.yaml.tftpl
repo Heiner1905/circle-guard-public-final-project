@@ -1,0 +1,160 @@
+## kube-prometheus-stack values for CircleGuard
+## Generated from Terraform — do not edit by hand.
+
+fullnameOverride: kube-prometheus-stack
+
+# ---------------------------------------------------------------------------
+# Default rules: keep on but disable a few that are noisy in academic clusters
+# ---------------------------------------------------------------------------
+defaultRules:
+  create: true
+  rules:
+    etcd: false
+    kubeApiserverAvailability: false
+    kubeApiserverBurnrate: false
+    kubeApiserverHistogram: false
+    kubeApiserverSlos: false
+    kubeProxy: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+
+# ---------------------------------------------------------------------------
+# Prometheus operator
+# ---------------------------------------------------------------------------
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  admissionWebhooks:
+    patch:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 32Mi
+
+# ---------------------------------------------------------------------------
+# Prometheus
+# ---------------------------------------------------------------------------
+prometheus:
+  prometheusSpec:
+    retention: ${prometheus_retention}
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+
+    # Discover ServiceMonitor / PodMonitor / Probe / PrometheusRule from any
+    # namespace and any release — the chart's default filters by helm label
+    # which excludes our microservices' chart.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+    resources:
+      requests:
+        cpu: ${prometheus_cpu_request}
+        memory: ${prometheus_mem_request}
+      limits:
+        cpu: ${prometheus_cpu_limit}
+        memory: ${prometheus_mem_limit}
+
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: ${prometheus_storage}
+
+# ---------------------------------------------------------------------------
+# Alertmanager — receivers (email/webhook) are configured in US-12
+# ---------------------------------------------------------------------------
+alertmanager:
+  alertmanagerSpec:
+    retention: ${alertmanager_retention}
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+    storage:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: ${alertmanager_storage}
+
+# ---------------------------------------------------------------------------
+# Grafana
+# ---------------------------------------------------------------------------
+grafana:
+  adminUser: ${grafana_admin_user}
+  adminPassword: ${grafana_admin_password}
+
+  persistence:
+    enabled: true
+    size: ${grafana_persistence}
+
+  resources:
+    requests:
+      cpu: ${grafana_cpu_request}
+      memory: ${grafana_mem_request}
+    limits:
+      cpu: ${grafana_cpu_limit}
+      memory: ${grafana_mem_limit}
+
+  # Sidecar auto-discovers dashboards/datasources stored as ConfigMaps with
+  # specific labels. Our Terraform creates ConfigMaps with grafana_dashboard=1.
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      folder: /tmp/dashboards
+      provider:
+        foldersFromFilesStructure: false
+    datasources:
+      enabled: true
+      label: grafana_datasource
+      labelValue: "1"
+
+  defaultDashboardsEnabled: true
+  defaultDashboardsTimezone: America/Bogota
+
+  service:
+    type: ClusterIP
+
+# ---------------------------------------------------------------------------
+# Node Exporter & kube-state-metrics
+# ---------------------------------------------------------------------------
+nodeExporter:
+  enabled: true
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# ---------------------------------------------------------------------------
+# Components disabled in managed K8s control planes (AKS hides etcd/scheduler)
+# ---------------------------------------------------------------------------
+kubeApiServer:
+  enabled: true
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false

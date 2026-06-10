@@ -1,44 +1,56 @@
 package com.circleguard.dashboard.client;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.*;
+import java.util.Date;
+import java.util.Map;
 
 @Component
 @Slf4j
 public class PromotionClient {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+    private final String promotionServiceUrl;
 
-    @Value("${circleguard.promotion-service.url:http://localhost:8088}")
-    private String promotionServiceUrl;
-
-    @SuppressWarnings("unchecked")
-    public Map<String, Object> getHealthStats() {
-        try {
-            return restTemplate.getForObject(
-                    promotionServiceUrl + "/api/v1/health-status/stats",
-                    Map.class
-            );
-        } catch (Exception e) {
-            log.error("Failed to fetch health stats from promotion-service", e);
-            return Map.of("error", "Service unavailable", "timestamp", new Date());
-        }
+    public PromotionClient(
+            RestTemplate restTemplate,
+            @Value("${circleguard.promotion-service.url:http://circleguard-promotion-service:8088}") String promotionServiceUrl
+    ) {
+        this.restTemplate = restTemplate;
+        this.promotionServiceUrl = promotionServiceUrl;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("rawtypes")
+    @CircuitBreaker(name = "promotionService", fallbackMethod = "getHealthStatsFallback")
+    public Map<String, Object> getHealthStats() {
+        Map response = restTemplate.getForObject(
+                promotionServiceUrl + "/api/v1/health-status/stats", Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> typed = response;
+        return typed;
+    }
+
+    public Map<String, Object> getHealthStatsFallback(Throwable throwable) {
+        log.warn("Circuit breaker fallback for promotion-service health stats", throwable);
+        return Map.of("error", "Service unavailable", "timestamp", new Date());
+    }
+
+    @SuppressWarnings("rawtypes")
+    @CircuitBreaker(name = "promotionService", fallbackMethod = "getHealthStatsByDepartmentFallback")
     public Map<String, Object> getHealthStatsByDepartment(String department) {
-        try {
-            return restTemplate.getForObject(
-                    promotionServiceUrl + "/api/v1/health-status/stats/department/" + department,
-                    Map.class
-            );
-        } catch (Exception e) {
-            log.error("Failed to fetch department stats from promotion-service", e);
-            return Map.of("error", "Service unavailable", "department", department, "timestamp", new Date());
-        }
+        Map response = restTemplate.getForObject(
+                promotionServiceUrl + "/api/v1/health-status/stats/department/" + department, Map.class);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> typed = response;
+        return typed;
+    }
+
+    public Map<String, Object> getHealthStatsByDepartmentFallback(String department, Throwable throwable) {
+        log.warn("Circuit breaker fallback for promotion-service department {}", department, throwable);
+        return Map.of("error", "Service unavailable", "department", department, "timestamp", new Date());
     }
 }
