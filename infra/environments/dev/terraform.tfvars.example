@@ -19,6 +19,13 @@ ldap_admin_password = "change-me-dev-ldap"
 
 middleware_persistence_size = "8Gi"
 
+# --- Observability (US-10) --------------------------------------------------
+enable_observability     = true
+grafana_admin_password   = "change-me-dev-grafana"
+# Absolute path; set to your checkout, e.g.
+# dashboards_path = "/home/<you>/.../circle-guard.../observability/dashboards"
+dashboards_path          = ""
+
 # --- AWS multi-cloud (off by default, flip to true to provision EKS+ECR) ----
 enable_aws             = false
 aws_region             = "us-east-1"

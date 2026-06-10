@@ -114,6 +114,26 @@ module "middleware" {
 }
 
 # ----------------------------------------------------------------------------
+# Observability stack (kube-prometheus-stack + Grafana dashboards).
+# Gated by enable_observability so individual envs can opt out.
+# ----------------------------------------------------------------------------
+
+module "observability" {
+  source = "../../modules/k8s-observability"
+  count  = var.enable_observability ? 1 : 0
+
+  namespace                = var.observability_namespace
+  grafana_admin_user       = var.grafana_admin_user
+  grafana_admin_password   = var.grafana_admin_password
+  prometheus_retention     = var.prometheus_retention
+  prometheus_storage_size  = var.prometheus_storage_size
+  grafana_persistence_size = var.grafana_persistence_size
+  dashboards_path          = var.dashboards_path
+
+  depends_on = [module.aks]
+}
+
+# ----------------------------------------------------------------------------
 # AWS multi-cloud (optional, gated by enable_aws). Modules use count so the
 # whole AWS stack is skipped when the flag is false.
 # ----------------------------------------------------------------------------

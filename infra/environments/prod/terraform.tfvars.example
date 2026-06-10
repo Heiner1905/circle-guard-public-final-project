@@ -22,6 +22,11 @@ ldap_admin_password = "REPLACE-WITH-VAULT-VALUE"
 
 middleware_persistence_size = "32Gi"
 
+# --- Observability (US-10) --------------------------------------------------
+enable_observability    = true
+grafana_admin_password  = "REPLACE-WITH-VAULT-VALUE"
+dashboards_path         = ""
+
 # --- AWS multi-cloud --------------------------------------------------------
 # Off by default. For prod multi-cloud, expect significant cost (~$72/mo just for
 # EKS control plane). Enable only when actively demoing or running DR drills.

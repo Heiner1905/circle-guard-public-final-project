@@ -23,6 +23,21 @@ output "kafka_bootstrap" {
   value       = module.middleware.kafka_bootstrap
 }
 
+output "observability_namespace" {
+  description = "Namespace running Prometheus / Grafana (null when disabled)."
+  value       = var.enable_observability ? module.observability[0].namespace : null
+}
+
+output "grafana_service" {
+  description = "In-cluster DNS of Grafana (null when disabled). Port-forward to view dashboards."
+  value       = var.enable_observability ? module.observability[0].grafana_service : null
+}
+
+output "prometheus_service" {
+  description = "In-cluster DNS of Prometheus (null when disabled)."
+  value       = var.enable_observability ? module.observability[0].prometheus_service : null
+}
+
 output "aws_eks_cluster" {
   description = "Name of the EKS cluster (only when enable_aws=true)."
   value       = var.enable_aws ? module.aws_eks[0].cluster_name : null

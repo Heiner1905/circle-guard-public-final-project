@@ -16,3 +16,32 @@ qr:
 
 server:
   port: 8087
+
+# Actuator + Micrometer (US-10) ---------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+# Business-metric simulator (US-10) -----------------------------------------
+circleguard:
+  metrics:
+    simulation:
+      enabled: ${CIRCLEGUARD_METRICS_SIMULATION_ENABLED:false}
+      interval-ms: 30000
