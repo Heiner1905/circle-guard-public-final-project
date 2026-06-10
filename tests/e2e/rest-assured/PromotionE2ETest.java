@@ -17,13 +17,14 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.is;
 
-@Disabled("Enable after wiring the E2E test source set and starting dependent CircleGuard services.")
+@Disabled("Enable after wiring the E2E test source set")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 class PromotionE2ETest {
 
     @Container
-    static Neo4jContainer<?> neo4j = new Neo4jContainer<>(DockerImageName.parse("neo4j:5.12"));
+    static Neo4jContainer<?> neo4j = new Neo4jContainer<>(DockerImageName.parse("neo4j:5.12"))
+            .withAdminPassword("password");
 
     @Container
     static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6.1"));
@@ -38,36 +39,40 @@ class PromotionE2ETest {
         String userB = "e2e-user-b";
         String userC = "e2e-user-c";
 
+        // 1. A contacta a B (usando endpoint real)
         given()
                 .baseUri("http://localhost")
                 .port(port)
                 .contentType("application/json")
                 .body(Map.of("sourceUserId", userA, "targetUserId", userB, "durationMinutes", 15))
                 .when()
-                .post("/api/v1/encounters")
+                .post("/api/v1/encounter/report")
                 .then()
                 .statusCode(anyOf(is(200), is(201), is(202)));
 
+        // 2. B contacta a C
         given()
                 .baseUri("http://localhost")
                 .port(port)
                 .contentType("application/json")
                 .body(Map.of("sourceUserId", userB, "targetUserId", userC, "durationMinutes", 10))
                 .when()
-                .post("/api/v1/encounters")
+                .post("/api/v1/encounter/report")
                 .then()
                 .statusCode(anyOf(is(200), is(201), is(202)));
 
+        // 3. A se confirma como CONFIRMED (usando endpoint real)
         given()
                 .baseUri("http://localhost")
                 .port(port)
                 .contentType("application/json")
-                .body(Map.of("anonymousId", userA, "status", "CONFIRMED", "adminOverride", true))
+                .body(Map.of("anonymousId", userA, "status", "CONFIRMED"))
                 .when()
-                .post("/api/v1/health/report")
+                .post("/api/v1/health/confirmed")
                 .then()
                 .statusCode(200);
 
+        // 4. B debe estar SUSPECT
         given()
                 .baseUri("http://localhost")
                 .port(port)
@@ -77,6 +82,7 @@ class PromotionE2ETest {
                 .statusCode(200)
                 .body("status", is("SUSPECT"));
 
+        // 5. C debe estar PROBABLE
         given()
                 .baseUri("http://localhost")
                 .port(port)
