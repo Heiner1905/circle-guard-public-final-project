@@ -12,16 +12,29 @@ import java.util.Map;
 public class LocationSignalController {
     private final LocationResolutionService locationResolutionService;
 
-    /**
-     * Endpoint for external WiFi controllers to post real-time signal detections.
-     */
     @PostMapping("/signal")
     public ResponseEntity<Void> receiveSignal(@RequestBody Map<String, Object> request) {
-        String apMac = (String) request.get("apMac");
-        String deviceMac = (String) request.get("deviceMac");
-        Double rssi = Double.valueOf(request.get("rssi").toString());
-
-        if (apMac == null || deviceMac == null || rssi == null) {
+        // Validar que request no sea null
+        if (request == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        Object apMacObj = request.get("apMac");
+        Object deviceMacObj = request.get("deviceMac");
+        Object rssiObj = request.get("rssi");
+        
+        // Validar campos requeridos
+        if (apMacObj == null || deviceMacObj == null || rssiObj == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        String apMac = apMacObj.toString();
+        String deviceMac = deviceMacObj.toString();
+        Double rssi;
+        
+        try {
+            rssi = Double.valueOf(rssiObj.toString());
+        } catch (NumberFormatException e) {
             return ResponseEntity.badRequest().build();
         }
 

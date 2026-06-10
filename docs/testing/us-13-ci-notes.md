@@ -3,7 +3,7 @@
 Comentarios para Heiner antes de ajustar pipelines en `.github/workflows`.
 
 ```yaml
-# COORDINAR CON HEINER - Sprint 2 US-13
+# COORDINAR - Sprint 2 US-13
 # Agregar los siguientes steps al pipeline:
 #
 # - name: Run tests with coverage
