@@ -1,0 +1,61 @@
+# Jaeger all-in-one: single pod that bundles agent + collector + query + UI
+# and stores traces in memory. Distributed mode (separate collector / query /
+# agent and a persistent backend like Elasticsearch) is intentionally out of
+# scope for the academic deployment — toggleable later by swapping the
+# values file.
+
+provisionDataStore:
+  cassandra: false
+  elasticsearch: false
+  kafka: false
+
+storage:
+  type: memory
+
+agent:
+  enabled: false
+
+collector:
+  enabled: false
+
+query:
+  enabled: false
+
+allInOne:
+  enabled: true
+  %{ if image_tag != "" ~}
+  image:
+    tag: ${image_tag}
+  %{ endif ~}
+  args:
+    - --memory.max-traces=${memory_max_traces}
+    - --query.base-path=/
+    - --collector.otlp.enabled=true
+  resources:
+    requests:
+      cpu: ${cpu_request}
+      memory: ${mem_request}
+    limits:
+      cpu: ${cpu_limit}
+      memory: ${mem_limit}
+  service:
+    # All-in-one exposes the OTLP + Jaeger ports through this service. The
+    # chart additionally renders the standard jaeger-collector / jaeger-query
+    # Services so apps and Grafana can use familiar names regardless of mode.
+    type: ClusterIP
+
+# Disable opt-in components we do not use.
+hotrod:
+  enabled: false
+spark:
+  enabled: false
+esIndexCleaner:
+  enabled: false
+esRollover:
+  enabled: false
+
+# Expose Prometheus metrics from the all-in-one container so the
+# kube-prometheus-stack from US-10 can scrape Jaeger itself (saturation /
+# spans accepted / spans dropped).
+serviceMonitor:
+  enabled: false

@@ -59,6 +59,13 @@ management:
     metrics:
       export:
         enabled: true
+  # Tracing (US-12) ---------------------------------------------------------
+  tracing:
+    sampling:
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://jaeger-collector.circleguard-observability:4318/v1/traces}
 
 # Business-metric simulator (US-10) -----------------------------------------
 circleguard:

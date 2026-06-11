@@ -32,6 +32,11 @@ loki_retention_hours = 72
 loki_storage_size    = "8Gi"
 enable_elk           = false
 
+# --- Tracing + Alerts (US-12) -----------------------------------------------
+enable_tracing           = true
+jaeger_memory_max_traces = 25000
+enable_alerts            = true
+
 # --- AWS multi-cloud (off by default, flip to true to provision EKS+ECR) ----
 enable_aws             = false
 aws_region             = "us-east-1"

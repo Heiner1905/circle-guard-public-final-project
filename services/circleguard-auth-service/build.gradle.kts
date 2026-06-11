@@ -19,6 +19,8 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
     implementation("net.logstash.logback:logstash-logback-encoder:7.4")
+    implementation("io.micrometer:micrometer-tracing-bridge-otel")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp")
     implementation("org.springframework.security:spring-security-ldap")
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.11.5")

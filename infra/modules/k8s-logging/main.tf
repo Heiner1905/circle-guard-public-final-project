@@ -124,9 +124,20 @@ resource "kubernetes_config_map" "loki_datasource" {
         url       = "http://loki-stack:3100"
         isDefault = false
         editable  = false
-        jsonData = {
-          maxLines = 1000
-        }
+        jsonData = merge(
+          { maxLines = 1000 },
+          var.tracing_datasource_uid == "" ? {} : {
+            derivedFields = [{
+              # Promoted by Promtail's pipelineStages JSON parser into a label
+              # on each log line; here it becomes a click-through link in
+              # Grafana Explore that opens the matching trace.
+              name          = "traceId"
+              matcherRegex  = "\"traceId\":\"([0-9a-f]+)\""
+              url           = "$${__value.raw}"
+              datasourceUid = var.tracing_datasource_uid
+            }]
+          }
+        )
       }]
     })
   }

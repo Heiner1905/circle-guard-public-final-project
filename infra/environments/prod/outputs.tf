@@ -48,6 +48,16 @@ output "kibana_service" {
   value       = var.enable_logging && var.enable_elk ? module.logging[0].kibana_service : null
 }
 
+output "jaeger_query_url" {
+  description = "In-cluster DNS of the Jaeger query UI (null when tracing is disabled)."
+  value       = var.enable_tracing ? module.tracing[0].jaeger_query_url : null
+}
+
+output "jaeger_otlp_endpoint" {
+  description = "OTLP HTTP endpoint for Spring Boot tracers (null when tracing is disabled)."
+  value       = var.enable_tracing ? module.tracing[0].jaeger_otlp_http_endpoint : null
+}
+
 output "aws_eks_cluster" {
   description = "Name of the EKS cluster (only when enable_aws=true)."
   value       = var.enable_aws ? module.aws_eks[0].cluster_name : null

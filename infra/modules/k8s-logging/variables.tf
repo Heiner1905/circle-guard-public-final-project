@@ -4,6 +4,12 @@ variable "namespace" {
   default     = "circleguard-observability"
 }
 
+variable "tracing_datasource_uid" {
+  description = "UID of a Grafana tracing datasource (e.g. \"jaeger\") to wire as a derivedField on the Loki datasource so traceId values become click-through links to traces. Empty string disables the derived field."
+  type        = string
+  default     = ""
+}
+
 variable "create_namespace" {
   description = "Whether this module should create the namespace. Set to false when the namespace is already managed by the observability module."
   type        = bool
