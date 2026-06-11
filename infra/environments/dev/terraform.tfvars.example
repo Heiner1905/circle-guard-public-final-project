@@ -37,6 +37,27 @@ enable_tracing           = true
 jaeger_memory_max_traces = 25000
 enable_alerts            = true
 
+# --- Security (US-15) -------------------------------------------------------
+# Selfsigned issuer is fine for dev; flip cluster_issuer_kind to "acme" + set
+# the ACME email to exercise real Let's Encrypt cert issuance.
+enable_security             = true
+application_namespace       = "circleguard"
+psa_enforce_level           = "baseline"
+psa_audit_level             = "restricted"
+psa_warn_level              = "restricted"
+enable_resource_quota       = true
+resource_quota_cpu_requests = "4"
+resource_quota_memory_requests = "8Gi"
+resource_quota_cpu_limits   = "8"
+resource_quota_memory_limits = "16Gi"
+resource_quota_pods         = 30
+enable_cert_manager         = true
+cert_manager_chart_version  = "v1.15.3"
+enable_cluster_issuer       = true
+cluster_issuer_kind         = "selfsigned"
+# cluster_issuer_acme_email = "ops@circleguard.example"
+# cluster_issuer_acme_server = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
 # --- AWS multi-cloud (off by default, flip to true to provision EKS+ECR) ----
 enable_aws             = false
 aws_region             = "us-east-1"

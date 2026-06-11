@@ -58,6 +58,16 @@ output "jaeger_otlp_endpoint" {
   value       = var.enable_tracing ? module.tracing[0].jaeger_otlp_http_endpoint : null
 }
 
+output "cluster_issuer_name" {
+  description = "Name of the ClusterIssuer to reference in Ingress annotations (null when security or issuer is disabled)."
+  value       = var.enable_security ? module.security[0].cluster_issuer_name : null
+}
+
+output "psa_levels" {
+  description = "Pod Security Admission levels effectively applied to the application namespace (null when security is disabled)."
+  value       = var.enable_security ? module.security[0].psa_levels : null
+}
+
 output "aws_eks_cluster" {
   description = "Name of the EKS cluster (only when enable_aws=true)."
   value       = var.enable_aws ? module.aws_eks[0].cluster_name : null

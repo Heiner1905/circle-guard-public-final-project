@@ -1,0 +1,11 @@
+issuer:
+  # Name referenced from Ingress annotations: cert-manager.io/cluster-issuer
+  name: circleguard-issuer
+  # selfsigned | acme
+  kind: selfsigned
+  acme:
+    email: ""
+    # Default to Let's Encrypt staging - safe for stage env.
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # HTTP-01 solver ingress class - must match Karold's global.ingress.className.
+    ingressClass: nginx

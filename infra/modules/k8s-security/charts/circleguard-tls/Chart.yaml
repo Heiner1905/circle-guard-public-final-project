@@ -1,0 +1,6 @@
+apiVersion: v2
+name: circleguard-tls
+description: ClusterIssuer for CircleGuard (self-signed for dev, ACME for stage/prod). Shipped as an in-repo Helm chart so the manifest can be rendered offline.
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

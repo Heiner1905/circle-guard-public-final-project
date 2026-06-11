@@ -43,6 +43,27 @@ enable_tracing           = true
 jaeger_memory_max_traces = 100000
 enable_alerts            = true
 
+# --- Security (US-15) -------------------------------------------------------
+# ACME with Let's Encrypt PRODUCTION - hits the real rate limits (50 certs per
+# registered domain per week). Set cluster_issuer_acme_email before applying.
+enable_security             = true
+application_namespace       = "circleguard"
+psa_enforce_level           = "baseline"
+psa_audit_level             = "restricted"
+psa_warn_level              = "restricted"
+enable_resource_quota       = true
+resource_quota_cpu_requests = "16"
+resource_quota_memory_requests = "32Gi"
+resource_quota_cpu_limits   = "32"
+resource_quota_memory_limits = "64Gi"
+resource_quota_pods         = 80
+enable_cert_manager         = true
+cert_manager_chart_version  = "v1.15.3"
+enable_cluster_issuer       = true
+cluster_issuer_kind         = "acme"
+cluster_issuer_acme_email   = "REPLACE-WITH-OPS-EMAIL"
+cluster_issuer_acme_server  = "https://acme-v02.api.letsencrypt.org/directory"
+
 # --- AWS multi-cloud --------------------------------------------------------
 # Off by default. For prod multi-cloud, expect significant cost (~$72/mo just for
 # EKS control plane). Enable only when actively demoing or running DR drills.
