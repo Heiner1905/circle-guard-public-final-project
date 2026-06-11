@@ -23,7 +23,12 @@ public class LoginController {
         String username = request.get("username");
         String password = request.get("password");
         
-        System.out.println("Login attempt for user: " + username + " (pass length: " + (password != null ? password.length() : 0) + ")");
+        // Validar campos requeridos
+        if (username == null || username.isBlank() || password == null || password.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Username and password are required"));
+        }
+        
+        System.out.println("Login attempt for user: " + username + " (pass length: " + password.length() + ")");
 
         try {
             // 1. Authenticate (Dual-Chain)
@@ -57,11 +62,16 @@ public class LoginController {
     @PostMapping("/visitor/handoff")
     public ResponseEntity<Map<String, String>> generateVisitorHandoff(@RequestBody Map<String, String> request) {
         String anonymousIdStr = request.get("anonymousId");
-        if (anonymousIdStr == null) {
+        if (anonymousIdStr == null || anonymousIdStr.isBlank()) {
             return ResponseEntity.badRequest().build();
         }
         
-        UUID anonymousId = UUID.fromString(anonymousIdStr);
+        UUID anonymousId;
+        try {
+            anonymousId = UUID.fromString(anonymousIdStr);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
         
         // Create a dummy authentication for the visitor
         Authentication visitorAuth = new UsernamePasswordAuthenticationToken(

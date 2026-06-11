@@ -55,4 +55,118 @@ class AnalyticsControllerTest {
                 .andExpect(jsonPath("$[0].hour").value("08:00"))
                 .andExpect(jsonPath("$[0].count").value(120));
     }
+
+    @Test
+    void shouldReturnSummary() throws Exception {
+        Map<String, Object> summary = new HashMap<>();
+        summary.put("totalStudents", 5000);
+        summary.put("activeCampuses", 3);
+        summary.put("totalEntries", 15000);
+
+        Mockito.when(analyticsService.getCampusSummary()).thenReturn(summary);
+
+        mockMvc.perform(get("/api/v1/analytics/summary")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalStudents").value(5000))
+                .andExpect(jsonPath("$.activeCampuses").value(3))
+                .andExpect(jsonPath("$.totalEntries").value(15000));
+    }
+
+    @Test
+    void shouldReturnDepartmentStats() throws Exception {
+        String department = "Computer Science";
+        Map<String, Object> departmentStats = new HashMap<>();
+        departmentStats.put("department", department);
+        departmentStats.put("studentCount", 1200);
+        departmentStats.put("entryCount", 4500);
+        departmentStats.put("averageOccupancy", 75.5);
+
+        Mockito.when(analyticsService.getDepartmentStats(department)).thenReturn(departmentStats);
+
+        mockMvc.perform(get("/api/v1/analytics/department/{department}", department)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.department").value(department))
+                .andExpect(jsonPath("$.studentCount").value(1200))
+                .andExpect(jsonPath("$.entryCount").value(4500))
+                .andExpect(jsonPath("$.averageOccupancy").value(75.5));
+    }
+
+    @Test
+    void shouldReturnTimeSeriesWithDefaultParameters() throws Exception {
+        List<Map<String, Object>> timeSeries = new ArrayList<>();
+        Map<String, Object> dataPoint = new HashMap<>();
+        dataPoint.put("timestamp", "2024-01-01T10:00:00");
+        dataPoint.put("count", 250);
+        timeSeries.add(dataPoint);
+
+        Mockito.when(analyticsService.getTimeSeries("hourly", 24)).thenReturn(timeSeries);
+
+        mockMvc.perform(get("/api/v1/analytics/time-series")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].timestamp").value("2024-01-01T10:00:00"))
+                .andExpect(jsonPath("$[0].count").value(250));
+    }
+
+    @Test
+    void shouldReturnTimeSeriesWithCustomParameters() throws Exception {
+        List<Map<String, Object>> timeSeries = new ArrayList<>();
+        Map<String, Object> dataPoint = new HashMap<>();
+        dataPoint.put("timestamp", "2024-01-01T00:00:00");
+        dataPoint.put("count", 100);
+        timeSeries.add(dataPoint);
+
+        Mockito.when(analyticsService.getTimeSeries("daily", 7)).thenReturn(timeSeries);
+
+        mockMvc.perform(get("/api/v1/analytics/time-series")
+                .param("period", "daily")
+                .param("limit", "7")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].timestamp").value("2024-01-01T00:00:00"))
+                .andExpect(jsonPath("$[0].count").value(100));
+    }
+
+    @Test
+    void shouldReturnEmptyTimeSeriesWhenNoData() throws Exception {
+        List<Map<String, Object>> emptyTimeSeries = new ArrayList<>();
+
+        Mockito.when(analyticsService.getTimeSeries("hourly", 24)).thenReturn(emptyTimeSeries);
+
+        mockMvc.perform(get("/api/v1/analytics/time-series")
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void shouldReturnEmptyDepartmentStatsWhenDepartmentNotFound() throws Exception {
+        String department = "NonExistentDept";
+        Map<String, Object> emptyStats = new HashMap<>();
+
+        Mockito.when(analyticsService.getDepartmentStats(department)).thenReturn(emptyStats);
+
+        mockMvc.perform(get("/api/v1/analytics/department/{department}", department)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void shouldHandleSpecialCharactersInDepartmentName() throws Exception {
+        String department = "Engineering & Applied Sciences";
+        Map<String, Object> departmentStats = new HashMap<>();
+        departmentStats.put("department", department);
+        departmentStats.put("studentCount", 800);
+
+        Mockito.when(analyticsService.getDepartmentStats(department)).thenReturn(departmentStats);
+
+        mockMvc.perform(get("/api/v1/analytics/department/{department}", department)
+                .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.department").value(department))
+                .andExpect(jsonPath("$.studentCount").value(800));
+    }
 }
