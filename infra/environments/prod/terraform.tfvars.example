@@ -35,6 +35,14 @@ loki_retention_hours = 336
 loki_storage_size    = "32Gi"
 enable_elk           = false
 
+# --- Tracing + Alerts (US-12) -----------------------------------------------
+# Jaeger runs in all-in-one + in-memory mode (academic scope). For true prod
+# scale, swap to distributed mode with an Elasticsearch backend (the existing
+# ECK release in k8s-logging covers it when enable_elk = true).
+enable_tracing           = true
+jaeger_memory_max_traces = 100000
+enable_alerts            = true
+
 # --- AWS multi-cloud --------------------------------------------------------
 # Off by default. For prod multi-cloud, expect significant cost (~$72/mo just for
 # EKS control plane). Enable only when actively demoing or running DR drills.

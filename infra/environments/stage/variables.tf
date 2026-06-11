@@ -254,3 +254,22 @@ variable "enable_elk" {
   type        = bool
   default     = false
 }
+
+# Tracing (US-12) ------------------------------------------------------------
+variable "enable_tracing" {
+  description = "Toggle to install the Jaeger tracing stack and the CircleGuard PrometheusRule alert bundle."
+  type        = bool
+  default     = true
+}
+
+variable "jaeger_memory_max_traces" {
+  description = "Maximum traces kept in the Jaeger in-memory backend."
+  type        = number
+  default     = 50000
+}
+
+variable "enable_alerts" {
+  description = "Whether to install the PrometheusRule CR with CircleGuard's alert family."
+  type        = bool
+  default     = true
+}

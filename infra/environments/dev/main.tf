@@ -143,11 +143,30 @@ module "logging" {
   source = "../../modules/k8s-logging"
   count  = var.enable_logging ? 1 : 0
 
-  namespace            = var.observability_namespace
-  create_namespace     = false
-  loki_retention_hours = var.loki_retention_hours
-  loki_storage_size    = var.loki_storage_size
-  enable_elk           = var.enable_elk
+  namespace              = var.observability_namespace
+  create_namespace       = false
+  loki_retention_hours   = var.loki_retention_hours
+  loki_storage_size      = var.loki_storage_size
+  enable_elk             = var.enable_elk
+  tracing_datasource_uid = var.enable_tracing ? "jaeger" : ""
+
+  depends_on = [module.observability]
+}
+
+# ----------------------------------------------------------------------------
+# Tracing stack (Jaeger all-in-one + Alertmanager rules via PrometheusRule).
+# Reuses the observability namespace so the Grafana datasource sidecar and
+# the kube-prometheus-stack Alertmanager pick everything up automatically.
+# ----------------------------------------------------------------------------
+
+module "tracing" {
+  source = "../../modules/k8s-tracing"
+  count  = var.enable_tracing ? 1 : 0
+
+  namespace                = var.observability_namespace
+  create_namespace         = false
+  jaeger_memory_max_traces = var.jaeger_memory_max_traces
+  enable_alerts            = var.enable_alerts
 
   depends_on = [module.observability]
 }
