@@ -2,11 +2,13 @@ package com.circleguard.identity.controller;
 
 import com.circleguard.identity.service.IdentityVaultService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 import java.util.Map;
+import java.util.HashMap;
 import org.springframework.kafka.core.KafkaTemplate;
 import com.circleguard.identity.event.IdentityAccessEvent;
 import org.springframework.security.core.Authentication;
@@ -26,9 +28,11 @@ public class IdentityVaultController {
      */
     @PostMapping("/map")
     public ResponseEntity<Map<String, UUID>> mapIdentity(@RequestBody Map<String, String> request) {
-        String realIdentity = request.get("realIdentity");
+        String realIdentity = request != null ? request.get("realIdentity") : null;
         UUID anonymousId = vaultService.getOrCreateAnonymousId(realIdentity);
-        return ResponseEntity.ok(Map.of("anonymousId", anonymousId));
+        Map<String, UUID> response = new HashMap<>();
+        response.put("anonymousId", anonymousId);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -36,15 +40,19 @@ public class IdentityVaultController {
      */
     @PostMapping("/visitor")
     public ResponseEntity<Map<String, UUID>> registerVisitor(@RequestBody Map<String, String> request) {
-        String name = request.get("name");
-        String email = request.get("email");
-        String reason = request.get("reason_for_visit");
+        String name = request != null ? request.get("name") : null;
+        String email = request != null ? request.get("email") : null;
+        String reason = request != null ? request.get("reason_for_visit") : null;
         
         // Combine details into a single identity string for the vault
-        String realIdentity = "VISITOR|" + email + "|" + name + "|" + reason;
+        String realIdentity = "VISITOR|" + (email != null ? email : "null") + "|" + 
+                              (name != null ? name : "null") + "|" + 
+                              (reason != null ? reason : "null");
         UUID anonymousId = vaultService.getOrCreateAnonymousId(realIdentity);
         
-        return ResponseEntity.ok(Map.of("anonymousId", anonymousId));
+        Map<String, UUID> response = new HashMap<>();
+        response.put("anonymousId", anonymousId);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -60,7 +68,9 @@ public class IdentityVaultController {
 
         try {
             realIdentity = vaultService.resolveRealIdentity(id);
-            return ResponseEntity.ok(Map.of("realIdentity", realIdentity));
+            Map<String, String> response = new HashMap<>();
+            response.put("realIdentity", realIdentity);
+            return ResponseEntity.ok(response);
         } catch (org.springframework.web.server.ResponseStatusException e) {
             status = "FAILURE_" + e.getStatusCode().toString();
             throw e;

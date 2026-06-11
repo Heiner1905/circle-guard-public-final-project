@@ -1,7 +1,10 @@
 package com.circleguard.file.service;
 
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.UUID;
@@ -29,8 +32,18 @@ public class FileStorageService {
     }
 
     public Resource loadFile(String filename) {
-        // Implement retrieval logic
-        return null; 
+        if (filename == null || filename.trim().isEmpty()) {
+            return null;
+        }
+        
+        try {
+            Path file = root.resolve(filename);
+            if (Files.exists(file) && Files.isReadable(file)) {
+                return new UrlResource(file.toUri());
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
-interface Resource {}

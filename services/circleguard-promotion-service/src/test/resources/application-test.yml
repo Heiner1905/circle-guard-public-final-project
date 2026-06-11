@@ -1,12 +1,18 @@
 spring:
+  datasource:
+    url: jdbc:h2:mem:promotion-test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
   flyway:
     enabled: false
   sql:
     init:
       mode: never
   jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: none
+      ddl-auto: create-drop
   neo4j:
     uri: bolt://localhost:7687
     authentication:

@@ -14,6 +14,9 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import com.circleguard.notification.service.AuditLogService;
+import com.circleguard.notification.service.TemplateService;
+
 
 @SpringBootTest(
         classes = NotificationApplication.class,
@@ -37,9 +40,14 @@ class AuthUserClientCircuitBreakerTest {
     @MockBean
     private RestTemplate restTemplate;
 
-    // Add this mock bean to satisfy EmailServiceImpl dependency
     @MockBean
     private JavaMailSender javaMailSender;
+
+    @MockBean
+    private AuditLogService auditLogService;
+
+    @MockBean
+    private TemplateService templateService;
 
     @Test
     void opensCircuitAfterRepeatedAuthFailures() {
