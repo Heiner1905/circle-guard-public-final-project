@@ -7,6 +7,9 @@ metadata:
   namespace: {{ $.Values.global.namespace }}
   labels:
     {{- include "circleguard.serviceLabels" (dict "root" $ "serviceName" $serviceName "service" $service) | nindent 4 }}
+  annotations:
+    "helm.sh/resource-policy": keep
+    "app.kubernetes.io/version": {{ $.Values.global.imageTag | default "latest" | quote }}
 spec:
   replicas: {{ default $.Values.defaults.replicas $service.replicas }}
   selector:
