@@ -5,11 +5,16 @@
 ###############################################################################
 
 # --- Azure (small SKUs for dev) ---------------------------------------------
-azure_location = "eastus"
-node_vm_size   = "Standard_B2s"
-node_min_count = 2
-node_max_count = 3
-acr_name       = "acrcircleguarddev"
+# La suscripción de despliegue (729bf021-4706-4651-bc17-b1a299ed9400) tiene
+# rol Contributor acotado al RG existente "CircleGuard" — NO se pueden crear
+# Resource Groups nuevos. Por eso este ambiente referencia el RG vía data
+# source. Si te dan acceso a otro RG, cambia este valor.
+azure_resource_group_name = "CircleGuard"
+azure_location            = "eastus"
+node_vm_size              = "Standard_B2s"
+node_min_count            = 2
+node_max_count            = 3
+acr_name                  = "acrcircleguarddev"
 
 # --- Middleware secrets (REQUIRED) ------------------------------------------
 postgres_password   = "change-me-dev-pg"

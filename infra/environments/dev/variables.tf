@@ -5,8 +5,14 @@ variable "extra_tags" {
 }
 
 # Azure -------------------------------------------------------------------
+variable "azure_resource_group_name" {
+  description = "Nombre del Resource Group EXISTENTE (no se crea). La suscripción de despliegue tiene rol Contributor acotado a este RG; todos los recursos de Azure (network, AKS, ACR) se crean adentro."
+  type        = string
+  default     = "CircleGuard"
+}
+
 variable "azure_location" {
-  description = "Azure region for this environment."
+  description = "Azure region for this environment. Informativo: la location efectiva se toma del RG existente referenciado por azure_resource_group_name."
   type        = string
   default     = "eastus"
 }

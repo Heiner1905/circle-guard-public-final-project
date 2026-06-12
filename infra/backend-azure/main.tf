@@ -21,16 +21,18 @@ locals {
   }
 }
 
-resource "azurerm_resource_group" "tfstate" {
-  name     = var.resource_group_name
-  location = var.location
-  tags     = local.common_tags
+# Suscripción con permisos limitados: el rol Contributor está acotado al RG
+# existente "CircleGuard" — no podemos crear Resource Groups. Por eso usamos
+# un data source en vez de `resource "azurerm_resource_group"`. La variable
+# `location` queda como informativa (no se aplica al RG, viene del existente).
+data "azurerm_resource_group" "tfstate" {
+  name = var.resource_group_name
 }
 
 resource "azurerm_storage_account" "tfstate" {
   name                     = var.storage_account_name
-  resource_group_name      = azurerm_resource_group.tfstate.name
-  location                 = azurerm_resource_group.tfstate.location
+  resource_group_name      = data.azurerm_resource_group.tfstate.name
+  location                 = data.azurerm_resource_group.tfstate.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
   account_kind             = "StorageV2"

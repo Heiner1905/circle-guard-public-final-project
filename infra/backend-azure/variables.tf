@@ -1,7 +1,7 @@
 variable "resource_group_name" {
-  description = "Resource Group that holds the remote tfstate Storage Account."
+  description = "Resource Group EXISTENTE que aloja el Storage Account del tfstate. No se crea (suscripción Azure con permisos acotados al RG 'CircleGuard')."
   type        = string
-  default     = "rg-circleguard-tfstate"
+  default     = "CircleGuard"
 }
 
 variable "location" {
