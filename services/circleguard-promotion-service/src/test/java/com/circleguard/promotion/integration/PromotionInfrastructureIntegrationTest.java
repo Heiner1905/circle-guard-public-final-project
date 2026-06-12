@@ -1,5 +1,6 @@
 package com.circleguard.promotion.integration;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.KafkaContainer;
@@ -12,6 +13,7 @@ import org.testcontainers.utility.DockerImageName;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Tag("integration")
 @Testcontainers(disabledWithoutDocker = true)
 class PromotionInfrastructureIntegrationTest {
 

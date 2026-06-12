@@ -1,5 +1,6 @@
 package com.circleguard.gateway.integration;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -7,6 +8,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Tag("integration")
 @Testcontainers(disabledWithoutDocker = true)
 class GatewayRedisIntegrationTest {
 
