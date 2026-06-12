@@ -11,6 +11,14 @@ locals {
 
 provider "azurerm" {
   features {}
+
+  # Suscripción con Contributor acotado al RG "CircleGuard": no podemos
+  # registrar Resource Providers a nivel de suscripción. Los RPs que usan
+  # network/AKS/ACR (Microsoft.Network, Microsoft.ContainerService,
+  # Microsoft.ContainerRegistry, Microsoft.OperationalInsights, etc.) ya
+  # vienen registrados por el owner; sólo los consumimos.
+  # Directiva de azurerm v3.x; en v4.x migrar a `resource_provider_registrations = "none"`.
+  skip_provider_registration = true
 }
 
 provider "aws" {
@@ -21,18 +29,20 @@ provider "aws" {
 # Azure: resource group + network + AKS + ACR
 # ----------------------------------------------------------------------------
 
-resource "azurerm_resource_group" "this" {
-  name     = "rg-${local.name_prefix}"
-  location = var.azure_location
-  tags     = local.common_tags
+# Suscripción Azure con rol Contributor acotado a UN Resource Group existente
+# ("CircleGuard") — no podemos crear RGs. Por eso este ambiente usa un data
+# source en vez de `resource "azurerm_resource_group"`. La location la toma
+# del RG existente (eastus); var.azure_location queda como informativa.
+data "azurerm_resource_group" "this" {
+  name = var.azure_resource_group_name
 }
 
 module "network" {
   source = "../../modules/azure-network"
 
   name_prefix         = local.name_prefix
-  resource_group_name = azurerm_resource_group.this.name
-  location            = azurerm_resource_group.this.location
+  resource_group_name = data.azurerm_resource_group.this.name
+  location            = data.azurerm_resource_group.this.location
   vnet_cidr           = var.vnet_cidr
   aks_subnet_cidr     = var.aks_subnet_cidr
   tags                = local.common_tags
@@ -41,25 +51,26 @@ module "network" {
 module "aks" {
   source = "../../modules/azure-aks"
 
-  name_prefix         = local.name_prefix
-  resource_group_name = azurerm_resource_group.this.name
-  location            = azurerm_resource_group.this.location
-  aks_subnet_id       = module.network.aks_subnet_id
-  kubernetes_version  = var.kubernetes_version
-  node_vm_size        = var.node_vm_size
-  node_min_count      = var.node_min_count
-  node_max_count      = var.node_max_count
-  service_cidr        = var.service_cidr
-  dns_service_ip      = var.dns_service_ip
-  tags                = local.common_tags
+  name_prefix                     = local.name_prefix
+  resource_group_name             = data.azurerm_resource_group.this.name
+  location                        = data.azurerm_resource_group.this.location
+  aks_subnet_id                   = module.network.aks_subnet_id
+  kubernetes_version              = var.kubernetes_version
+  node_vm_size                    = var.node_vm_size
+  node_min_count                  = var.node_min_count
+  node_max_count                  = var.node_max_count
+  service_cidr                    = var.service_cidr
+  dns_service_ip                  = var.dns_service_ip
+  api_server_authorized_ip_ranges = var.api_server_authorized_ip_ranges
+  tags                            = local.common_tags
 }
 
 module "acr" {
   source = "../../modules/azure-acr"
 
   acr_name                       = var.acr_name
-  resource_group_name            = azurerm_resource_group.this.name
-  location                       = azurerm_resource_group.this.location
+  resource_group_name            = data.azurerm_resource_group.this.name
+  location                       = data.azurerm_resource_group.this.location
   sku                            = var.acr_sku
   aks_kubelet_identity_object_id = module.aks.kubelet_identity_object_id
   tags                           = local.common_tags

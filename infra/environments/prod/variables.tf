@@ -59,6 +59,12 @@ variable "dns_service_ip" {
   default     = "172.16.0.10"
 }
 
+variable "api_server_authorized_ip_ranges" {
+  description = "CIDRs autorizados a alcanzar el API server de AKS. PRODUCCIÓN: lista no debería quedar vacía — poblar con la CIDR corporativa / VNet de Bastion."
+  type        = list(string)
+  default     = []
+}
+
 variable "acr_name" {
   description = "ACR name (globally unique, lowercase alphanumeric)."
   type        = string

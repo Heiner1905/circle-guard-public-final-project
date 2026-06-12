@@ -64,6 +64,11 @@ cluster_issuer_kind         = "acme"
 cluster_issuer_acme_email   = "REPLACE-WITH-OPS-EMAIL"
 cluster_issuer_acme_server  = "https://acme-v02.api.letsencrypt.org/directory"
 
+# --- AKS API allowlist (OBLIGATORIO en producción) --------------------------
+# Sin esto el API server queda abierto a internet. Poblar con CIDR
+# corporativo / VNet de Bastion y BORRAR la línea AZU-0041 de .trivyignore.
+# api_server_authorized_ip_ranges = ["190.0.0.0/24", "200.1.2.0/24"]
+
 # --- AWS multi-cloud --------------------------------------------------------
 # Off by default. For prod multi-cloud, expect significant cost (~$72/mo just for
 # EKS control plane). Enable only when actively demoing or running DR drills.

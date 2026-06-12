@@ -5,8 +5,14 @@ variable "extra_tags" {
 }
 
 # Azure -------------------------------------------------------------------
+variable "azure_resource_group_name" {
+  description = "Nombre del Resource Group EXISTENTE (no se crea). La suscripción de despliegue tiene rol Contributor acotado a este RG; todos los recursos de Azure (network, AKS, ACR) se crean adentro."
+  type        = string
+  default     = "CircleGuard"
+}
+
 variable "azure_location" {
-  description = "Azure region for this environment."
+  description = "Azure region for this environment. Informativo: la location efectiva se toma del RG existente referenciado por azure_resource_group_name."
   type        = string
   default     = "eastus"
 }
@@ -57,6 +63,12 @@ variable "dns_service_ip" {
   description = "AKS DNS service IP (must be inside service_cidr)."
   type        = string
   default     = "172.16.0.10"
+}
+
+variable "api_server_authorized_ip_ranges" {
+  description = "CIDRs autorizados a alcanzar el API server de AKS. Vacío = abierto a internet (default académico)."
+  type        = list(string)
+  default     = []
 }
 
 variable "acr_name" {

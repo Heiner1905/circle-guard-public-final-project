@@ -59,3 +59,14 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+# AZU-0041 mitigation: cuando esta lista NO está vacía, se setea
+# `api_server_access_profile.authorized_ip_ranges` en el cluster y
+# Trivy/Checkov dan AZU-0041 por resuelto. Default `[]` deja el API server
+# abierto a internet (cómodo para clase, NO para producción) y mantenemos
+# el finding suprimido en `.trivyignore` con un TODO claro.
+variable "api_server_authorized_ip_ranges" {
+  description = "Lista de CIDRs autorizados a alcanzar el API server del cluster. Vacío = abierto a internet (sólo para entornos académicos). Producción: poblar con tu CIDR corporativo / Bastion y borrar la línea AZU-0041 de .trivyignore."
+  type        = list(string)
+  default     = []
+}

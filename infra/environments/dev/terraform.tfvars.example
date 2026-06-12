@@ -5,11 +5,16 @@
 ###############################################################################
 
 # --- Azure (small SKUs for dev) ---------------------------------------------
-azure_location = "eastus"
-node_vm_size   = "Standard_B2s"
-node_min_count = 2
-node_max_count = 3
-acr_name       = "acrcircleguarddev"
+# La suscripción de despliegue (729bf021-4706-4651-bc17-b1a299ed9400) tiene
+# rol Contributor acotado al RG existente "CircleGuard" — NO se pueden crear
+# Resource Groups nuevos. Por eso este ambiente referencia el RG vía data
+# source. Si te dan acceso a otro RG, cambia este valor.
+azure_resource_group_name = "CircleGuard"
+azure_location            = "eastus"
+node_vm_size              = "Standard_B2s"
+node_min_count            = 2
+node_max_count            = 3
+acr_name                  = "acrcircleguarddev"
 
 # --- Middleware secrets (REQUIRED) ------------------------------------------
 postgres_password   = "change-me-dev-pg"
@@ -57,6 +62,11 @@ enable_cluster_issuer       = true
 cluster_issuer_kind         = "selfsigned"
 # cluster_issuer_acme_email = "ops@circleguard.example"
 # cluster_issuer_acme_server = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+# --- AKS API allowlist (opcional; vacío = abierto en dev) -------------------
+# Cuando configures un Bastion / VPN, poblar la lista y borrar la línea
+# AZU-0041 de .trivyignore en la raíz del repo.
+# api_server_authorized_ip_ranges = ["190.0.0.0/24"]
 
 # --- AWS multi-cloud (off by default, flip to true to provision EKS+ECR) ----
 enable_aws             = false

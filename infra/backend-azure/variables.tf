@@ -1,7 +1,7 @@
 variable "resource_group_name" {
-  description = "Resource Group that holds the remote tfstate Storage Account."
+  description = "Resource Group EXISTENTE que aloja el Storage Account del tfstate. No se crea (suscripción Azure con permisos acotados al RG 'CircleGuard')."
   type        = string
-  default     = "rg-circleguard-tfstate"
+  default     = "CircleGuard"
 }
 
 variable "location" {
@@ -25,4 +25,16 @@ variable "container_name" {
   description = "Blob container that stores the *.tfstate files for each environment."
   type        = string
   default     = "tfstate"
+}
+
+variable "allowed_ip_rules" {
+  description = "Public IPv4 addresses or CIDRs that may reach the tfstate Storage Account when network_rules.default_action = Deny. Default empty — AzureServices bypass cubre el caso común; añade aquí la IP saliente de tu runner GitHub Actions si necesitas acceso directo."
+  type        = list(string)
+  default     = []
+}
+
+variable "allowed_subnet_ids" {
+  description = "Subnet IDs habilitados a alcanzar el Storage Account (Service Endpoint Microsoft.Storage). Útil cuando corres terraform desde una VM en una VNet de Azure."
+  type        = list(string)
+  default     = []
 }

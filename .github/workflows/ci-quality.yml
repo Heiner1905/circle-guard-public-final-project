@@ -54,16 +54,42 @@ jobs:
           chmod +x ./gradlew
           ./gradlew test jacocoTestReport --no-daemon --stacktrace
 
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v3
+      # Comprobamos si los secrets de Sonar están seteados ANTES de intentar
+      # el scan. Sin ellos, el scanner explota con
+      # "Expected URL scheme 'http'/'https' but no scheme was found"
+      # porque concatena una host-url vacía. Cuando Heiner termine de
+      # configurar SonarCloud (SONAR_TOKEN + SONAR_HOST_URL en Settings →
+      # Secrets), el step de abajo arrancará automáticamente.
+      - name: Check SonarQube secrets
+        id: sonar-secrets
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        with:
-          args: >
-            -Dsonar.projectKey=circleguard
-            -Dsonar.projectName=CircleGuard
-            -Dsonar.qualitygate.wait=true
+        run: |
+          if [ -n "$SONAR_TOKEN" ] && [ -n "$SONAR_HOST_URL" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning ::SonarQube secrets (SONAR_TOKEN/SONAR_HOST_URL) no están configurados — análisis se salta."
+          fi
+
+      # Usamos el plugin de Gradle `org.sonarqube` (ya declarado en
+      # build.gradle.kts) en vez de la sonarqube-scan-action: es lo que el
+      # propio scanner recomienda para proyectos Gradle ("WARNING! Gradle
+      # project detected. Sonar recommends using the SonarQube plugin for
+      # Gradle during the build process instead of using this GitHub Action").
+      # TODO: añadir -Dsonar.qualitygate.wait=true cuando SonarCloud esté
+      # configurado y el quality gate tenga umbrales realistas del proyecto.
+      - name: SonarQube analysis (Gradle plugin)
+        if: steps.sonar-secrets.outputs.configured == 'true'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          ./gradlew sonar --no-daemon --stacktrace \
+            -Dsonar.host.url="$SONAR_HOST_URL" \
+            -Dsonar.token="$SONAR_TOKEN" \
+            -Dsonar.qualitygate.wait=false
 
       - name: Upload JaCoCo reports
         if: always()
@@ -84,7 +110,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Trivy filesystem (vuln + misconfig + secret)
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: fs
           scan-ref: "."
@@ -103,7 +129,7 @@ jobs:
           category: trivy-fs
 
       - name: Trivy filesystem (gate — fail on CRITICAL)
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: fs
           scan-ref: "."
@@ -155,7 +181,7 @@ jobs:
 
       - name: Trivy image scan (report only)
         id: scan
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.35.0
         continue-on-error: true
         with:
           image-ref: ${{ steps.tag.outputs.image }}
@@ -174,7 +200,7 @@ jobs:
 
       - name: Trivy image gate (fail on CRITICAL)
         if: steps.scan.outcome == 'success'
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: ${{ steps.tag.outputs.image }}
           format: table
