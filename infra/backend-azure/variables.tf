@@ -26,3 +26,15 @@ variable "container_name" {
   type        = string
   default     = "tfstate"
 }
+
+variable "allowed_ip_rules" {
+  description = "Public IPv4 addresses or CIDRs that may reach the tfstate Storage Account when network_rules.default_action = Deny. Default empty — AzureServices bypass cubre el caso común; añade aquí la IP saliente de tu runner GitHub Actions si necesitas acceso directo."
+  type        = list(string)
+  default     = []
+}
+
+variable "allowed_subnet_ids" {
+  description = "Subnet IDs habilitados a alcanzar el Storage Account (Service Endpoint Microsoft.Storage). Útil cuando corres terraform desde una VM en una VNet de Azure."
+  type        = list(string)
+  default     = []
+}

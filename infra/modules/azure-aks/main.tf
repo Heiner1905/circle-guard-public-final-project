@@ -46,5 +46,15 @@ resource "azurerm_kubernetes_cluster" "this" {
     dns_service_ip    = var.dns_service_ip
   }
 
+  # AZU-0041: si `api_server_authorized_ip_ranges` no está vacío, restringimos
+  # el acceso al API server a esos CIDRs. Si está vacío, el bloque no se
+  # renderiza y AKS queda con API público (suprimido en .trivyignore con TODO).
+  dynamic "api_server_access_profile" {
+    for_each = length(var.api_server_authorized_ip_ranges) > 0 ? [1] : []
+    content {
+      authorized_ip_ranges = var.api_server_authorized_ip_ranges
+    }
+  }
+
   tags = var.tags
 }

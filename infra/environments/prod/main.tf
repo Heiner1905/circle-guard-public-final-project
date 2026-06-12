@@ -41,17 +41,18 @@ module "network" {
 module "aks" {
   source = "../../modules/azure-aks"
 
-  name_prefix         = local.name_prefix
-  resource_group_name = azurerm_resource_group.this.name
-  location            = azurerm_resource_group.this.location
-  aks_subnet_id       = module.network.aks_subnet_id
-  kubernetes_version  = var.kubernetes_version
-  node_vm_size        = var.node_vm_size
-  node_min_count      = var.node_min_count
-  node_max_count      = var.node_max_count
-  service_cidr        = var.service_cidr
-  dns_service_ip      = var.dns_service_ip
-  tags                = local.common_tags
+  name_prefix                     = local.name_prefix
+  resource_group_name             = azurerm_resource_group.this.name
+  location                        = azurerm_resource_group.this.location
+  aks_subnet_id                   = module.network.aks_subnet_id
+  kubernetes_version              = var.kubernetes_version
+  node_vm_size                    = var.node_vm_size
+  node_min_count                  = var.node_min_count
+  node_max_count                  = var.node_max_count
+  service_cidr                    = var.service_cidr
+  dns_service_ip                  = var.dns_service_ip
+  api_server_authorized_ip_ranges = var.api_server_authorized_ip_ranges
+  tags                            = local.common_tags
 }
 
 module "acr" {

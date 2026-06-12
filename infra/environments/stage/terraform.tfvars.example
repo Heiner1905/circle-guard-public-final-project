@@ -56,6 +56,11 @@ cluster_issuer_kind         = "acme"
 cluster_issuer_acme_email   = "REPLACE-WITH-OPS-EMAIL"
 cluster_issuer_acme_server  = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
+# --- AKS API allowlist (recomendado en stage) -------------------------------
+# Pueblala con tu CIDR / VPN y, cuando esté, borra la línea AZU-0041 de
+# .trivyignore para que el gate vuelva a detectar regresiones.
+# api_server_authorized_ip_ranges = ["190.0.0.0/24"]
+
 # --- AWS multi-cloud (off by default) ---------------------------------------
 enable_aws             = false
 aws_region             = "us-east-1"

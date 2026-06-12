@@ -58,6 +58,11 @@ cluster_issuer_kind         = "selfsigned"
 # cluster_issuer_acme_email = "ops@circleguard.example"
 # cluster_issuer_acme_server = "https://acme-staging-v02.api.letsencrypt.org/directory"
 
+# --- AKS API allowlist (opcional; vacío = abierto en dev) -------------------
+# Cuando configures un Bastion / VPN, poblar la lista y borrar la línea
+# AZU-0041 de .trivyignore en la raíz del repo.
+# api_server_authorized_ip_ranges = ["190.0.0.0/24"]
+
 # --- AWS multi-cloud (off by default, flip to true to provision EKS+ECR) ----
 enable_aws             = false
 aws_region             = "us-east-1"

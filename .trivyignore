@@ -1,0 +1,27 @@
+# ------------------------------------------------------------------------------
+# .trivyignore — supresiones DOCUMENTADAS y CON CADUCIDAD para el escaneo de
+# CI · Quality (Trivy filesystem). Cada entrada debe llevar:
+#   1. el id que se suprime,
+#   2. por QUÉ se suprime (debe ser una decisión consciente, no flojera),
+#   3. CUÁNDO/CÓMO se quita la supresión (TODO con dueño y disparador).
+# Cuando arregles la causa raíz, BORRA la línea — no la dejes "por si acaso".
+# ------------------------------------------------------------------------------
+
+# CVE-2026-9277 · npm shell-quote@1.8.3 · CRITICAL · arbitrary code execution.
+# Vive en `mobile/package-lock.json` como dep transitiva. NO la trae código
+# nuestro directamente, viene arrastrada por la cadena de Expo / Metro.
+# TODO(Karold): correr `npm audit fix` o forzar `"shell-quote": "^1.8.4"` en
+# `mobile/package.json` overrides + regenerar lock. Cuando 1.8.4+ esté en el
+# lock, BORRAR esta línea.
+CVE-2026-9277
+
+# AZU-0041 · AKS API server abierto a internet · CRITICAL.
+# El módulo `infra/modules/azure-aks` ya soporta restringirlo vía la variable
+# `api_server_authorized_ip_ranges` (renderiza `api_server_access_profile`
+# cuando la lista NO está vacía). Mientras esa lista quede en `[]` por defecto
+# en los tres envs (caso académico: no hay CIDR corporativa fija), Trivy
+# seguirá reportando AZU-0041.
+# TODO(Heiner): cuando tengas IP corporativa / VPN / Bastion, setear
+# `api_server_authorized_ip_ranges = ["x.y.z.w/24"]` en el tfvars del env
+# correspondiente y BORRAR esta línea — el bloque ya se renderiza solo.
+AVD-AZU-0041
