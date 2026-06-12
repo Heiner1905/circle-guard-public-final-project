@@ -21,6 +21,16 @@ provider "azurerm" {
   # NOTA: directiva válida para azurerm v3.x. Si en algún momento subimos
   # a v4.x hay que migrar a `resource_provider_registrations = "none"`.
   skip_provider_registration = true
+
+  # El usuario que corre `terraform apply` tiene rol Contributor sobre el RG
+  # (management plane) pero NO tiene rol de datos sobre blobs (data plane:
+  # "Storage Blob Data Contributor"). Sin esto, al crear el
+  # azurerm_storage_container el provider intenta autenticarse contra el
+  # data plane vía Azure AD y rompe con 403 AuthorizationFailure. Con
+  # storage_use_azuread=false el provider usa la access key del Storage
+  # Account (la lista vía management plane, donde sí tenemos permiso),
+  # y la operación de blobs/containers funciona.
+  storage_use_azuread = false
 }
 
 locals {
