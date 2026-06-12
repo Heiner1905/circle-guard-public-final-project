@@ -172,6 +172,48 @@ module "tracing" {
 }
 
 # ----------------------------------------------------------------------------
+# Security stack (US-15) - Pod Security Admission labels on the application
+# namespace, ResourceQuota + LimitRange, cert-manager and a ClusterIssuer
+# (selfsigned in dev).
+#
+# Apply order note: this module patches labels on the `circleguard` namespace,
+# which is owned by Karold's helm chart. The first `terraform apply` will
+# create everything except this module's kubernetes_labels resource, then run
+# `helm install circleguard helm/circleguard ...`, then re-run terraform to
+# patch the namespace. The kubernetes_labels resource uses server-side apply,
+# so it coexists with Helm without ownership conflict.
+# ----------------------------------------------------------------------------
+
+module "security" {
+  source = "../../modules/k8s-security"
+  count  = var.enable_security ? 1 : 0
+
+  circleguard_namespace = var.application_namespace
+
+  psa_enforce_level = var.psa_enforce_level
+  psa_audit_level   = var.psa_audit_level
+  psa_warn_level    = var.psa_warn_level
+
+  enable_resource_quota          = var.enable_resource_quota
+  resource_quota_cpu_requests    = var.resource_quota_cpu_requests
+  resource_quota_memory_requests = var.resource_quota_memory_requests
+  resource_quota_cpu_limits      = var.resource_quota_cpu_limits
+  resource_quota_memory_limits   = var.resource_quota_memory_limits
+  resource_quota_pods            = var.resource_quota_pods
+
+  enable_cert_manager        = var.enable_cert_manager
+  cert_manager_chart_version = var.cert_manager_chart_version
+
+  enable_cluster_issuer             = var.enable_cluster_issuer
+  cluster_issuer_kind               = var.cluster_issuer_kind
+  cluster_issuer_acme_email         = var.cluster_issuer_acme_email
+  cluster_issuer_acme_server        = var.cluster_issuer_acme_server
+  cluster_issuer_acme_ingress_class = var.cluster_issuer_acme_ingress_class
+
+  depends_on = [module.observability]
+}
+
+# ----------------------------------------------------------------------------
 # AWS multi-cloud (optional, gated by enable_aws). Modules use count so the
 # whole AWS stack is skipped when the flag is false.
 # ----------------------------------------------------------------------------

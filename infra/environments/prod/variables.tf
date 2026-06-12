@@ -273,3 +273,112 @@ variable "enable_alerts" {
   type        = bool
   default     = true
 }
+
+# Security (US-15) -----------------------------------------------------------
+variable "enable_security" {
+  description = "Toggle to install the k8s-security module (PSA labels, ResourceQuota, LimitRange, cert-manager, ClusterIssuer)."
+  type        = bool
+  default     = true
+}
+
+variable "application_namespace" {
+  description = "Application namespace (must match helm/circleguard/values.yaml global.namespace)."
+  type        = string
+  default     = "circleguard"
+}
+
+variable "psa_enforce_level" {
+  description = "Pod Security Admission enforce level. Keep at baseline until Karold's deployment template adds seccompProfile=RuntimeDefault."
+  type        = string
+  default     = "baseline"
+}
+
+variable "psa_audit_level" {
+  description = "Pod Security Admission audit level (logged to audit log without blocking)."
+  type        = string
+  default     = "restricted"
+}
+
+variable "psa_warn_level" {
+  description = "Pod Security Admission warn level (kubectl warnings, no blocking)."
+  type        = string
+  default     = "restricted"
+}
+
+variable "enable_resource_quota" {
+  description = "Install a ResourceQuota on the application namespace."
+  type        = bool
+  default     = true
+}
+
+variable "resource_quota_cpu_requests" {
+  description = "Hard cap on total CPU requests in the application namespace."
+  type        = string
+  default     = "16"
+}
+
+variable "resource_quota_memory_requests" {
+  description = "Hard cap on total memory requests in the application namespace."
+  type        = string
+  default     = "32Gi"
+}
+
+variable "resource_quota_cpu_limits" {
+  description = "Hard cap on total CPU limits in the application namespace."
+  type        = string
+  default     = "32"
+}
+
+variable "resource_quota_memory_limits" {
+  description = "Hard cap on total memory limits in the application namespace."
+  type        = string
+  default     = "64Gi"
+}
+
+variable "resource_quota_pods" {
+  description = "Hard cap on pod count in the application namespace."
+  type        = number
+  default     = 80
+}
+
+variable "enable_cert_manager" {
+  description = "Install the jetstack/cert-manager Helm release."
+  type        = bool
+  default     = true
+}
+
+variable "cert_manager_chart_version" {
+  description = "Helm chart version for jetstack/cert-manager."
+  type        = string
+  default     = "v1.15.3"
+}
+
+variable "enable_cluster_issuer" {
+  description = "Install the CircleGuard ClusterIssuer via the local circleguard-tls chart."
+  type        = bool
+  default     = true
+}
+
+variable "cluster_issuer_kind" {
+  description = "ACME with Let's Encrypt production in prod."
+  type        = string
+  default     = "acme"
+}
+
+variable "cluster_issuer_acme_email" {
+  description = "Contact email for ACME registration. REQUIRED in prod."
+  type        = string
+  default     = ""
+}
+
+variable "cluster_issuer_acme_server" {
+  description = "ACME directory URL. Defaults to Let's Encrypt PRODUCTION in this env - hits real rate limits."
+  type        = string
+  default     = "https://acme-v02.api.letsencrypt.org/directory"
+}
+
+variable "cluster_issuer_acme_ingress_class" {
+  description = "Ingress class name used by the HTTP-01 solver (must match helm/circleguard global.ingress.className)."
+  type        = string
+  default     = "nginx"
+}
