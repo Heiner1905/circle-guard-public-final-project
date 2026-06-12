@@ -11,6 +11,16 @@ terraform {
 
 provider "azurerm" {
   features {}
+
+  # La suscripción de despliegue (729bf021-...) no concede permisos a nivel
+  # de suscripción — solo Contributor sobre el RG "CircleGuard". Sin esto,
+  # el provider intenta registrar Microsoft.Storage / Microsoft.Network /
+  # etc. y rompe con "Terraform does not have the necessary permissions to
+  # register Resource Providers". Los providers ya están registrados a
+  # nivel de suscripción por el owner; sólo nos toca consumirlos.
+  # NOTA: directiva válida para azurerm v3.x. Si en algún momento subimos
+  # a v4.x hay que migrar a `resource_provider_registrations = "none"`.
+  skip_provider_registration = true
 }
 
 locals {
