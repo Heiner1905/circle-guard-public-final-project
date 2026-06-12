@@ -54,18 +54,41 @@ jobs:
           chmod +x ./gradlew
           ./gradlew test jacocoTestReport --no-daemon --stacktrace
 
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v3
+      # Comprobamos si los secrets de Sonar están seteados ANTES de intentar
+      # el scan. Sin ellos, el scanner explota con
+      # "Expected URL scheme 'http'/'https' but no scheme was found"
+      # porque concatena una host-url vacía. Cuando Heiner termine de
+      # configurar SonarCloud (SONAR_TOKEN + SONAR_HOST_URL en Settings →
+      # Secrets), el step de abajo arrancará automáticamente.
+      - name: Check SonarQube secrets
+        id: sonar-secrets
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        with:
-          # TODO: volver a -Dsonar.qualitygate.wait=true cuando SonarCloud
-          # esté configurado con SONAR_TOKEN/SONAR_HOST_URL y el quality gate
-          # ajustado a umbrales realistas del proyecto.
-          args: >
-            -Dsonar.projectKey=circleguard
-            -Dsonar.projectName=CircleGuard
+        run: |
+          if [ -n "$SONAR_TOKEN" ] && [ -n "$SONAR_HOST_URL" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning ::SonarQube secrets (SONAR_TOKEN/SONAR_HOST_URL) no están configurados — análisis se salta."
+          fi
+
+      # Usamos el plugin de Gradle `org.sonarqube` (ya declarado en
+      # build.gradle.kts) en vez de la sonarqube-scan-action: es lo que el
+      # propio scanner recomienda para proyectos Gradle ("WARNING! Gradle
+      # project detected. Sonar recommends using the SonarQube plugin for
+      # Gradle during the build process instead of using this GitHub Action").
+      # TODO: añadir -Dsonar.qualitygate.wait=true cuando SonarCloud esté
+      # configurado y el quality gate tenga umbrales realistas del proyecto.
+      - name: SonarQube analysis (Gradle plugin)
+        if: steps.sonar-secrets.outputs.configured == 'true'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          ./gradlew sonar --no-daemon --stacktrace \
+            -Dsonar.host.url="$SONAR_HOST_URL" \
+            -Dsonar.token="$SONAR_TOKEN" \
             -Dsonar.qualitygate.wait=false
 
       - name: Upload JaCoCo reports
