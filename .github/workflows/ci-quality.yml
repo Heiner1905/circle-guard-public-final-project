@@ -110,7 +110,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Trivy filesystem (vuln + misconfig + secret)
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: fs
           scan-ref: "."
@@ -129,7 +129,7 @@ jobs:
           category: trivy-fs
 
       - name: Trivy filesystem (gate — fail on CRITICAL)
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           scan-type: fs
           scan-ref: "."
@@ -181,7 +181,7 @@ jobs:
 
       - name: Trivy image scan (report only)
         id: scan
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.35.0
         continue-on-error: true
         with:
           image-ref: ${{ steps.tag.outputs.image }}
@@ -200,7 +200,7 @@ jobs:
 
       - name: Trivy image gate (fail on CRITICAL)
         if: steps.scan.outcome == 'success'
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: ${{ steps.tag.outputs.image }}
           format: table
