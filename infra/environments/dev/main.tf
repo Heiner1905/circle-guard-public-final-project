@@ -11,6 +11,14 @@ locals {
 
 provider "azurerm" {
   features {}
+
+  # Suscripción con Contributor acotado al RG "CircleGuard": no podemos
+  # registrar Resource Providers a nivel de suscripción. Los RPs que usan
+  # network/AKS/ACR (Microsoft.Network, Microsoft.ContainerService,
+  # Microsoft.ContainerRegistry, Microsoft.OperationalInsights, etc.) ya
+  # vienen registrados por el owner; sólo los consumimos.
+  # Directiva de azurerm v3.x; en v4.x migrar a `resource_provider_registrations = "none"`.
+  skip_provider_registration = true
 }
 
 provider "aws" {
