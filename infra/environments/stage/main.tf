@@ -18,10 +18,8 @@ provider "azurerm" {
 # Azure: resource group + network + AKS + ACR
 # ----------------------------------------------------------------------------
 
-resource "azurerm_resource_group" "this" {
-  name     = "rg-${local.name_prefix}"
-  location = var.azure_location
-  tags     = local.common_tags
+data "azurerm_resource_group" "this" {
+  name = "rg-${local.name_prefix}"
 }
 
 module "network" {
