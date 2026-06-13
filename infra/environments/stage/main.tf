@@ -71,9 +71,9 @@ provider "helm" {
 module "middleware" {
   source = "../../modules/k8s-middleware"
 
-  create_namespace   = false  # El namespace ya existe en dev
-  namespace          = var.middleware_namespace
-  persistence_size   = var.middleware_persistence_size
+  create_namespace = false # El namespace ya existe en dev
+  namespace        = var.middleware_namespace
+  persistence_size = var.middleware_persistence_size
 
   postgres_username   = var.postgres_username
   postgres_password   = var.postgres_password
@@ -93,8 +93,8 @@ module "observability" {
   source = "../../modules/k8s-observability"
   count  = var.enable_observability ? 1 : 0
 
-  create_namespace   = false  # El namespace ya existe en dev
-  namespace          = var.observability_namespace
+  create_namespace         = false # El namespace ya existe en dev
+  namespace                = var.observability_namespace
   grafana_admin_user       = var.grafana_admin_user
   grafana_admin_password   = var.grafana_admin_password
   prometheus_retention     = var.prometheus_retention
@@ -141,8 +141,8 @@ module "security" {
   source = "../../modules/k8s-security"
   count  = var.enable_security ? 1 : 0
 
-  create_namespace        = false  # El namespace cert-manager ya existe
-  circleguard_namespace   = var.application_namespace
+  create_namespace      = false # El namespace cert-manager ya existe
+  circleguard_namespace = var.application_namespace
 
   psa_enforce_level = var.psa_enforce_level
   psa_audit_level   = var.psa_audit_level
