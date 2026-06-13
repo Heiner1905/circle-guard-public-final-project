@@ -22,11 +22,11 @@ resource "azurerm_kubernetes_cluster" "this" {
   role_based_access_control_enabled = true
 
   default_node_pool {
-    name                 = "system"
-    vm_size              = var.node_vm_size
-    vnet_subnet_id       = var.aks_subnet_id
-    enable_auto_scaling  = false
-    node_count           = 1
+    name                = "system"
+    vm_size             = var.node_vm_size
+    vnet_subnet_id      = var.aks_subnet_id
+    enable_auto_scaling = false
+    node_count          = 1
     # min_count            = var.node_min_count
     # max_count            = var.node_max_count
     os_disk_size_gb      = 30

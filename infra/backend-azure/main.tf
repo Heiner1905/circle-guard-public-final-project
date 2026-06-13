@@ -49,9 +49,9 @@ resource "azurerm_storage_account" "tfstate" {
   public_network_access_enabled   = true
 
   network_rules {
-    default_action = "Deny"
-    bypass         = ["AzureServices", "Logging", "Metrics"]
-    ip_rules       = var.allowed_ip_rules
+    default_action             = "Deny"
+    bypass                     = ["AzureServices", "Logging", "Metrics"]
+    ip_rules                   = var.allowed_ip_rules
     virtual_network_subnet_ids = var.allowed_subnet_ids
   }
 
