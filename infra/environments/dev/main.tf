@@ -21,9 +21,9 @@ provider "azurerm" {
   skip_provider_registration = true
 }
 
-provider "aws" {
-  region = var.aws_region
-}
+# provider "aws" {
+#   region = var.aws_region
+# }
 
 # ----------------------------------------------------------------------------
 # Azure: resource group + network + AKS + ACR
