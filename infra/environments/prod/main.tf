@@ -20,7 +20,7 @@ provider "azurerm" {
 
 # Usar el resource group existente de dev
 data "azurerm_resource_group" "this" {
-  name = "CircleGuard"  # RG de dev
+  name = "CircleGuard" # RG de dev
 }
 
 # Usar el AKS cluster existente de dev
