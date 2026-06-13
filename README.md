@@ -1,100 +1,111 @@
-# 🛡️ CircleGuard Monorepo
+# CircleGuard project
 
-**Absolute Privacy. High-Speed Containment. Secure Campus.**
+Video URL: _
+Members: Heiner Danit Rincón (A0040) and Karold Mejia (A00401806)
 
-CircleGuard is a state-of-the-art university contact tracing and fencing system designed to identify interconnected contact groups ("Circles") and apply rapid health fences while preserving individual anonymity.
+**Absolute privacy. High-speed containment. Secure campus.**
 
----
-
-## 🌟 Vision & Mission
-
-Our vision is a university campus where health containment speed outpaces lab confirmation timelines without compromising student privacy. CircleGuard leverages campus-native intelligence—class schedules and WiFi infrastructure—to deliver a human-validated, graph-based protection ecosystem.
-
-### Key Differentiators
-- **Privacy-as-Code**: Zero real-name exposure outside a secure Health Center vault.
-- **Recursive Containment**: Status promotion cascades (Suspect → Probable → Confirmed) that trigger in milliseconds.
-- **Campus Integration**: Smart check-ins using existing WiFi AP triangulation and Bluetooth Low Energy (BLE).
+CircleGuard is a university contact tracing and fencing system designed to identify interconnected contact groups, referred to as "circles", and apply rapid health fences while preserving individual anonymity.
 
 ---
 
-## 📊 Success Metrics
+## Vision and mission
+
+The vision is a university campus where health containment speed outpaces laboratory confirmation timelines without compromising student privacy. CircleGuard leverages campus-native intelligence, including class schedules and WiFi infrastructure, to deliver a human-validated graph-based protection ecosystem.
+
+### Key differentiators
+- **Privacy as code**: Zero real-name exposure outside a secure health centre vault.
+- **Recursive containment**: Status promotion cascades from suspect to probable to confirmed that trigger in milliseconds.
+- **Campus integration**: Smart check-ins using existing WiFi access point triangulation and Bluetooth low energy.
+
+---
+
+## Success metrics
 
 | Metric | Target | Measurement |
 |:---|:---|:---|
-| **Containment Speed** | < 60 Seconds | Automated test of promotion engine cascade |
-| **Privacy Compliance** | 100% Anonymity | Penetration test on graph database (Zero real names) |
-| **Check-in Adoption** | > 70% | Analytics on scheduled class contact validation |
-| **False Positive Rate** | < 15% | Post-fence surveys of actual vs. suspected contact |
-| **System Uptime** | 99.5% | 7:00 AM – 10:00 PM (Academic Peak Hours) |
+| **Containment speed** | Less than 60 seconds | Automated test of promotion engine cascade |
+| **Privacy compliance** | 100 per cent anonymity | Penetration test on graph database with zero real names |
+| **Check-in adoption** | Greater than 70 per cent | Analytics on scheduled class contact validation |
+| **False positive rate** | Less than 15 per cent | Post-fence surveys of actual versus suspected contact |
+| **System uptime** | 99.5 per cent | 7:00 AM to 10:00 PM during academic peak hours |
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture overview
 
-CircleGuard follows a **Microservice Architecture** built on a **Hybrid Data Model**.
+CircleGuard follows a microservice architecture built on a hybrid data model.
 
-### Core Engine
-1. **Status Promotion Machine**: Uses **Neo4j** for recursive graph traversals to identify contacts within a 14-day temporal window.
-2. **Anonymization Vault**: A segregated **PostgreSQL** vault handles salted-hash identity mapping, compliant with **FERPA** regulations.
-3. **Event-Driven Core**: **Apache Kafka** manages asynchronous status changes, audit logs, and notification dispatches.
+### Core engine
+- **Status promotion machine**: Uses Neo4j for recursive graph traversals to identify contacts within a 14-day temporal window.
+- **Anonymisation vault**: A segregated PostgreSQL vault handles salted-hash identity mapping, compliant with FERPA regulations.
+- **Event-driven core**: Apache Kafka manages asynchronous status changes, audit logs and notification dispatches.
 
-### Services Directory
-- **Auth Service**: Dual-chain LDAP (University) / Local (Guest) auth with Dynamic RBAC.
-- **Identity Service**: Cryptographic vault for anonymizing real identities.
-- **Promotion Service**: The status engine (Recursive Graph Processing).
-- **Notification Service**: Multi-channel dispatcher (Push/Email/SMS).
-- **Form Service**: Dynamic health questionnaire engine.
-- **Gateway Service**: Campus entry validation via signed, time-limited QR tokens.
-- **Dashboard Service**: Geospatial hotspot analytics (Privacy-preserving).
-- **File Service**: Secure certificate and document storage (S3-compatible).
+### Services directory
+- **Auth service**: Dual-chain LDAP for university access and local for guest access with dynamic role-based access control.
+- **Identity service**: Cryptographic vault for anonymising real identities.
+- **Promotion service**: Status engine for recursive graph processing.
+- **Notification service**: Multi-channel dispatcher supporting push, email and SMS.
+- **Form service**: Dynamic health questionnaire engine.
+- **Gateway service**: Campus entry validation using signed time-limited QR tokens.
+- **Dashboard service**: Geospatial hotspot analytics with privacy preservation.
+- **File service**: Secure certificate and document storage compatible with S3.
 
 ---
 
-## 🛠️ Technical Stack
+## Technical stack
 
 | Layer | Technology | Rationale |
 |:---|:---|:---|
-| **Backend** | Spring Boot 4 / Java 21 | Enterprise-grade maturity & low-latency Jakarta EE support. |
-| **Graph DB** | Neo4j 5.26 | High-performance recursive traversals unreachable with SQL. |
-| **Relational DB**| PostgreSQL 16 | ACID compliant storage for identity and configuration. |
-| **Message Bus** | Apache Kafka 7.6 | Persistent, audit-trailed event log for status dispatches. |
-| **Caching** | Redis 7.2 | L2 distributed cache for rapid entry-gate status validation. |
-| **Mobile/Web** | Expo (React Native) | Unified codebase across iOS, Android, and Browser. |
-| **Infra** | Kubernetes | Orchestration for high availability and auto-scaling. |
+| **Backend** | Spring Boot 4 with Java 21 | Enterprise-grade maturity and low-latency Jakarta EE support |
+| **Graph database** | Neo4j version 5.26 | High-performance recursive traversals unreachable with SQL |
+| **Relational database** | PostgreSQL version 16 | ACID compliant storage for identity and configuration |
+| **Message bus** | Apache Kafka version 7.6 | Persistent audit-trailed event log for status dispatches |
+| **Caching** | Redis version 7.2 | L2 distributed cache for rapid entry-gate status validation |
+| **Mobile and web** | Expo with React Native | Unified codebase across iOS, Android and browser |
+| **Infrastructure** | Kubernetes | Orchestration for high availability and auto-scaling |
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
-### Phase 1: MVP — The Intelligence Core (Current)
-- [x] Status Promotion Machine (Suspect → Probable → Confirmed).
-- [x] Temporal graph with 14-day TTL edges.
-- [x] Multi-channel fence notifications (Push/Email/SMS).
-- [ ] Health Center de-identification console.
+### Phase one: MVP (Intelligence core) current
 
-### Phase 2: Growth — Spatial Intelligence
-- [ ] WiFi AP triangulation integration.
-- [ ] Campus entry validation (Gatekeeper) QR integration.
-- [ ] LMS integration for "Remote Attendance" status automation.
+- Status promotion machine supporting suspect to probable to confirmed transitions
+- Temporal graph with 14-day time-to-live edges
+- Multi-channel fence notifications for push, email and SMS
+- Health centre de-identification console (in progress)
 
-### Phase 3: Vision — Full Ecosystem
-- [ ] Off-campus circle detection via P2P Bluetooth.
-- [ ] Global Health Dashboard with hotspot visualization.
-- [ ] Lab API bridge for automated test result ingestion.
+### Phase two: Growth (Spatial intelligence)
+
+- WiFi access point triangulation integration
+- Campus entry validation with Gatekeeper QR integration
+- Learning management system integration for remote attendance status automation
+
+### Phase three: Vision (Full ecosystem)
+
+- Off-campus circle detection via peer-to-peer Bluetooth
+- Global health dashboard with hotspot visualisation
+- Laboratory API bridge for automated test result ingestion
 
 ---
 
-## 💻 Local Development
+## Local development
 
-### 1. Infrastructure
-Ensure Docker is installed, then start the middleware stack:
+### Infrastructure
+
+Ensure Docker is installed and start the middleware stack using the following command:
+
 ```bash
 docker-compose -f docker-compose.dev.yml up -d
 ```
-*Middleware includes: PostgreSQL, Neo4j, Kafka, Zookeeper, Redis, and OpenLDAP.*
 
-### 2. Build & Run
-CircleGuard uses Gradle for parallel builds across services:
+The middleware includes PostgreSQL, Neo4j, Kafka, Zookeeper, Redis and OpenLDAP.
+
+### Build and run
+
+CircleGuard uses Gradle for parallel builds across services.
+
 ```bash
 # Start all microservices in parallel
 ./gradlew bootRun --parallel
@@ -103,56 +114,63 @@ CircleGuard uses Gradle for parallel builds across services:
 ./gradlew :services:<service-name>:bootRun
 ```
 
-### 3. API Exploration
-Every service exposes an OpenAPI 3.0 interface. Once running, visit:
+### API exploration
+
+Every service exposes an OpenAPI 3.0 interface. Once running, visit the following URL:
+
 `http://localhost:<service-port>/swagger-ui/index.html`
 
 ---
 
-## 📱 Frontend Development
+## Frontend development
 
-The frontend is built using **Expo (React Native)**, supporting iOS, Android, and Web from a single codebase located in `/mobile`.
+The frontend is built using Expo with React Native, supporting iOS, Android and web from a single codebase located in the `mobile` directory.
 
-### 1. Prerequisites
-Ensure you have Node.js installed and dependencies loaded:
+### Prerequisites
+
+Ensure that Node.js is installed and load the dependencies:
+
 ```bash
 cd mobile
 npm install
 ```
 
-### 2. Run the Application
-You can run the app in various modes depending on your target platform:
+### Run the application
+
+The application can be run in various modes depending on the target platform.
 
 | Platform | Command | Notes |
 |:---|:---|:---|
-| **Development Menu** | `npm run start` | Opens the Expo Go start-up menu. |
-| **Android** | `npm run android` | Requires Android Studio / Emulator or a connected device. |
-| **iOS** | `npm run ios` | Requires macOS with Xcode / Simulator installed. |
-| **Web Browser** | `npm run web` | Launches the dashboard/app in your default browser. |
+| **Development menu** | `npm run start` | Opens the Expo Go start-up menu |
+| **Android** | `npm run android` | Requires Android Studio, an emulator or a connected device |
+| **iOS** | `npm run ios` | Requires macOS with Xcode or Simulator installed |
+| **Web browser** | `npm run web` | Launches the dashboard or application in the default browser |
 
-### 3. Testing
-To run frontend unit and component tests:
+### Testing
+
+To run frontend unit and component tests, use the following command:
+
 ```bash
 npm run test
 ```
 
 ---
 
-## 🧪 Testing
+## Testing
 
-We maintain high system integrity via multi-level testing:
+System integrity is maintained through multi-level testing.
 
 | Command | Scope |
 |:---|:---|
-| `./gradlew test` | Full system suite (Unit + Integration) |
+| `./gradlew test` | Full system suite covering unit and integration tests |
 | `./gradlew :services:<name>:test` | Single service testing |
 
-**Note**: Integration tests use **Testcontainers** to spawn ephemeral Neo4j and PostgreSQL instances for zero-side-effect validation.
+Integration tests use Testcontainers to spawn ephemeral Neo4j and PostgreSQL instances for zero-side-effect validation.
 
 ---
 
-## 🔐 Privacy & Compliance
+## Privacy and compliance
 
-- **FERPA Compliance**: Student identities are never stored in the contact graph.
-- **Right to be Forgotten**: Users can trigger complete data purging via the Identity Vault.
-- **Temporal Privacy**: All contact edges are automatically purged after 14 days.
+- **FERPA compliance**: Student identities are never stored in the contact graph.
+- **Right to be forgotten**: Users can trigger complete data purging through the identity vault.
+- **Temporal privacy**: All contact edges are automatically purged after 14 days.
