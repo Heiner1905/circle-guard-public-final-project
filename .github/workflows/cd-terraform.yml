@@ -119,6 +119,8 @@ jobs:
           ldap_admin_password    = "${{ secrets.LDAP_ADMIN_PASSWORD }}"
           grafana_admin_password = "${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
           enable_aws             = false
+          enable_tracing         = false
+
           EOF
 
       - name: terraform plan
