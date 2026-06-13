@@ -50,7 +50,7 @@ Service configuration points to middleware in namespace `circleguard-middleware`
 - Redis: `redis.circleguard-middleware.svc.cluster.local`
 - LDAP: `openldap.circleguard-middleware.svc.cluster.local`
 
-## Validate without a cluster
+## Validate Without A Cluster
 
 ```bash
 helm lint ./helm/circleguard
