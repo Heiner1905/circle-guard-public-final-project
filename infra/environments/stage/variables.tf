@@ -32,7 +32,7 @@ variable "kubernetes_version" {
 variable "node_vm_size" {
   description = "VM SKU for AKS nodes."
   type        = string
-  default     = "Standard_B2ms"
+  default     = "standard_d2s_v7"
 }
 
 variable "node_min_count" {

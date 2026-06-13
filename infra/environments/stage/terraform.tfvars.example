@@ -6,7 +6,7 @@
 
 # --- Azure (medium SKUs for stage) ------------------------------------------
 azure_location = "eastus"
-node_vm_size   = "Standard_B2ms"
+node_vm_size   = "standard_d2s_v7"
 node_min_count = 2
 node_max_count = 4
 acr_name       = "acrcircleguardstage"
