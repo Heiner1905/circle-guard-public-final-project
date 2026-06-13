@@ -26,8 +26,8 @@ module "network" {
   source = "../../modules/azure-network"
 
   name_prefix         = local.name_prefix
-  resource_group_name = azurerm_resource_group.this.name
-  location            = azurerm_resource_group.this.location
+  resource_group_name = data.azurerm_resource_group.this.name
+  location            = data.azurerm_resource_group.this.location
   vnet_cidr           = var.vnet_cidr
   aks_subnet_cidr     = var.aks_subnet_cidr
   tags                = local.common_tags
@@ -37,8 +37,8 @@ module "aks" {
   source = "../../modules/azure-aks"
 
   name_prefix                     = local.name_prefix
-  resource_group_name             = azurerm_resource_group.this.name
-  location                        = azurerm_resource_group.this.location
+  resource_group_name             = data.azurerm_resource_group.this.name
+  location                        = data.azurerm_resource_group.this.location
   aks_subnet_id                   = module.network.aks_subnet_id
   kubernetes_version              = var.kubernetes_version
   node_vm_size                    = var.node_vm_size
@@ -54,8 +54,8 @@ module "acr" {
   source = "../../modules/azure-acr"
 
   acr_name                       = var.acr_name
-  resource_group_name            = azurerm_resource_group.this.name
-  location                       = azurerm_resource_group.this.location
+  resource_group_name            = data.azurerm_resource_group.this.name
+  location                       = data.azurerm_resource_group.this.location
   sku                            = var.acr_sku
   aks_kubelet_identity_object_id = module.aks.kubelet_identity_object_id
   tags                           = local.common_tags

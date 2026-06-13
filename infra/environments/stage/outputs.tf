@@ -1,6 +1,6 @@
 output "resource_group" {
   description = "Name of the Azure Resource Group hosting this environment."
-  value       = azurerm_resource_group.this.name
+  value       = data.azurerm_resource_group.this.name
 }
 
 output "aks_cluster_name" {
