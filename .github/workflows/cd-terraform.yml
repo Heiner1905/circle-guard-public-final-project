@@ -118,6 +118,7 @@ jobs:
           redis_password         = "${{ secrets.REDIS_PASSWORD }}"
           ldap_admin_password    = "${{ secrets.LDAP_ADMIN_PASSWORD }}"
           grafana_admin_password = "${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
+          enable_aws             = false
           EOF
 
       - name: terraform plan
