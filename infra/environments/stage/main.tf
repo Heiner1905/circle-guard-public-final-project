@@ -13,10 +13,6 @@ provider "azurerm" {
   features {}
 }
 
-provider "aws" {
-  region = var.aws_region
-}
-
 # ----------------------------------------------------------------------------
 # Azure: resource group + network + AKS + ACR
 # ----------------------------------------------------------------------------
