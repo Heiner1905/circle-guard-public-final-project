@@ -180,5 +180,11 @@ jobs:
       - name: terraform init
         run: terraform init -input=false -backend-config=backend.hcl
 
+      - name: Remove problematic resources from state
+        run: |
+          echo "Removing ACR role assignment from state..."
+          terraform state rm module.acr.azurerm_role_assignment.acr_pull 2>/dev/null || true
+          echo "State cleanup completed"
+
       - name: terraform apply
         run: terraform apply -input=false -auto-approve tfplan
