@@ -6,7 +6,7 @@
 
 # --- Azure (production SKUs) ------------------------------------------------
 azure_location = "eastus"
-node_vm_size   = "Standard_D2s_v5"
+node_vm_size   = "standard_d2s_v7"
 node_min_count = 3
 node_max_count = 6
 acr_name       = "acrcircleguardprod"

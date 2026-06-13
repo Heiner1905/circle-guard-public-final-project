@@ -1,4 +1,4 @@
-resource_group_name  = "rg-circleguard-tfstate"
-storage_account_name = "stcgtfstateh1905"
+resource_group_name  = "CircleGuard"
+storage_account_name = "tfstate1781322989"
 container_name       = "tfstate"
-key                  = "prod.terraform.tfstate"
+key                  = "stage.terraform.tfstate"

@@ -11,10 +11,10 @@
 # source. Si te dan acceso a otro RG, cambia este valor.
 azure_resource_group_name = "CircleGuard"
 azure_location            = "eastus"
-node_vm_size              = "Standard_B2s"
+node_vm_size              = "standard_d2s_v7"
 node_min_count            = 2
 node_max_count            = 3
-acr_name                  = "acrcircleguarddev"
+acr_name                  = "acrcircleguarddev2"
 
 # --- Middleware secrets (REQUIRED) ------------------------------------------
 postgres_password   = "change-me-dev-pg"

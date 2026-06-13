@@ -26,7 +26,7 @@ variable "aks_subnet_cidr" {
 variable "kubernetes_version" {
   description = "AKS Kubernetes version."
   type        = string
-  default     = "1.30.4"
+  default     = "1.35.5"
 }
 
 variable "node_vm_size" {
