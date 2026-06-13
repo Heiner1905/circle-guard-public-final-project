@@ -1,0 +1,190 @@
+{{/*
+NetworkPolicies for the circleguard namespace (US-15).
+
+Opt-in / opt-out:
+  .Values.security.networkPolicies.enabled controls the whole block.
+  Defaults to true when the key is not provided in values.yaml so that the
+  policies render with the existing chart without forcing a values.yaml edit.
+
+What this template ships:
+  1. circleguard-default-deny             - deny all ingress + egress
+  2. circleguard-allow-dns-egress         - DNS to kube-system on 53/udp+tcp
+  3. circleguard-allow-egress-middleware  - egress to middleware DBs/Kafka/Redis/LDAP
+  4. circleguard-allow-egress-observability - egress to Loki, Jaeger OTLP, Logstash
+  5. circleguard-allow-intra-namespace    - east-west traffic between services
+  6. circleguard-allow-ingress-controller - external ingress -> gateway only
+  7. circleguard-allow-observability-scrape - Prometheus/Promtail -> actuator port
+*/}}
+{{- $netpolEnabled := true -}}
+{{- if hasKey .Values "security" -}}
+{{-   if hasKey .Values.security "networkPolicies" -}}
+{{-     if hasKey .Values.security.networkPolicies "enabled" -}}
+{{-       $netpolEnabled = .Values.security.networkPolicies.enabled -}}
+{{-     end -}}
+{{-   end -}}
+{{- end -}}
+{{- if $netpolEnabled }}
+{{- $ns                  := .Values.global.namespace }}
+{{- $middlewareNs        := .Values.global.middlewareNamespace }}
+{{- $observabilityNs     := default "circleguard-observability" (((.Values.security).networkPolicies).observabilityNamespace) }}
+{{- $ingressControllerNs := default "ingress-nginx" (((.Values.security).networkPolicies).ingressNamespace) }}
+{{- $gatewayName         := default "circleguard-gateway-service" (((.Values.security).networkPolicies).gatewayServiceName) }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: circleguard-default-deny
+  namespace: {{ $ns }}
+  labels:
+    {{- include "circleguard.labels" . | nindent 4 }}
+    circleguard.io/security: default-deny
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: circleguard-allow-dns-egress
+  namespace: {{ $ns }}
+  labels:
+    {{- include "circleguard.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: circleguard-allow-egress-middleware
+  namespace: {{ $ns }}
+  labels:
+    {{- include "circleguard.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $middlewareNs }}
+      ports:
+        - protocol: TCP
+          port: 5432    # PostgreSQL
+        - protocol: TCP
+          port: 7687    # Neo4j Bolt
+        - protocol: TCP
+          port: 9092    # Kafka
+        - protocol: TCP
+          port: 6379    # Redis
+        - protocol: TCP
+          port: 389     # LDAP
+        - protocol: TCP
+          port: 636     # LDAPS
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: circleguard-allow-egress-observability
+  namespace: {{ $ns }}
+  labels:
+    {{- include "circleguard.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $observabilityNs }}
+      ports:
+        - protocol: TCP
+          port: 3100    # Loki push
+        - protocol: TCP
+          port: 4317    # OTLP gRPC (Jaeger collector)
+        - protocol: TCP
+          port: 4318    # OTLP HTTP (Jaeger collector)
+        - protocol: TCP
+          port: 5044    # Logstash beats
+        - protocol: TCP
+          port: 9200    # Elasticsearch (optional ECK)
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: circleguard-allow-intra-namespace
+  namespace: {{ $ns }}
+  labels:
+    {{- include "circleguard.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector: {}
+  egress:
+    - to:
+        - podSelector: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: circleguard-allow-ingress-controller
+  namespace: {{ $ns }}
+  labels:
+    {{- include "circleguard.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $gatewayName }}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $ingressControllerNs }}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: circleguard-allow-observability-scrape
+  namespace: {{ $ns }}
+  labels:
+    {{- include "circleguard.labels" . | nindent 4 }}
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ $observabilityNs }}
+      # Match every actuator HTTP port exposed by the microservices.
+      ports:
+        {{- range $serviceName, $service := .Values.services }}
+        - protocol: TCP
+          port: {{ $service.port }}
+        {{- end }}
+{{- end }}

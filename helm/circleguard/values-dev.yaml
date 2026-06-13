@@ -1,0 +1,6 @@
+global:
+  environment: dev
+  springProfilesActive: dev
+
+defaults:
+  replicas: 1

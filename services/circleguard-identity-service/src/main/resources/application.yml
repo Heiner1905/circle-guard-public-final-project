@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: circleguard-identity-service
+  mvc:
+    problemdetails:
+      enabled: true
+  datasource:
+    url: jdbc:postgresql://localhost:5432/circleguard_identity
+    username: admin
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+vault:
+  secret: "746573742d7365637265742d33322d63686172732d6c6f6e672d313233343536"
+  salt: "deadbeef"
+  hash-salt: "12345678"
+
+jwt:
+  secret: "my-super-secret-dev-key-32-chars-long-12345678"
+
+server:
+  port: 8083
+
+# Actuator + Micrometer (US-10) ---------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  # Tracing (US-12) ---------------------------------------------------------
+  tracing:
+    sampling:
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://jaeger-collector.circleguard-observability:4318/v1/traces}
+
+# Logging (US-11) -----------------------------------------------------------
+logging:
+  level:
+    root: INFO
+    com.circleguard: INFO
+  pattern:
+    correlation: "[%X{traceId:-},%X{spanId:-}] "

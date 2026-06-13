@@ -1,0 +1,6 @@
+releaseLabel: kube-prometheus-stack
+serviceRegex: "circleguard-.*"
+thresholds:
+  errorRate: 0.05
+  latencyP99Seconds: 1.0
+  heapUsageRatio: 0.85

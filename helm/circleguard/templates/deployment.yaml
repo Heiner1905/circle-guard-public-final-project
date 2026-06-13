@@ -1,0 +1,71 @@
+{{- range $serviceName, $service := .Values.services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $service.fullName }}
+  namespace: {{ $.Values.global.namespace }}
+  labels:
+    {{- include "circleguard.serviceLabels" (dict "root" $ "serviceName" $serviceName "service" $service) | nindent 4 }}
+  annotations:
+    "helm.sh/resource-policy": keep
+    "app.kubernetes.io/version": {{ $.Values.global.imageTag | default "latest" | quote }}
+spec:
+  replicas: {{ default $.Values.defaults.replicas $service.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $service.fullName }}
+      app.kubernetes.io/instance: {{ $.Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $service.fullName }}
+        app.kubernetes.io/instance: {{ $.Release.Name }}
+        app.kubernetes.io/component: {{ $serviceName }}
+    spec:
+      serviceAccountName: {{ $service.fullName }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: {{ $serviceName }}
+          image: {{ include "circleguard.image" (dict "root" $ "service" $service) | quote }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ $service.port }}
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: {{ $service.fullName }}-config
+            {{- if $service.secret }}
+            - secretRef:
+                name: {{ $service.fullName }}-secret
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: {{ $.Values.defaults.probes.initialDelaySeconds }}
+            periodSeconds: {{ $.Values.defaults.probes.periodSeconds }}
+            timeoutSeconds: {{ $.Values.defaults.probes.timeoutSeconds }}
+            failureThreshold: {{ $.Values.defaults.probes.failureThreshold }}
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: {{ $.Values.defaults.probes.initialDelaySeconds }}
+            periodSeconds: {{ $.Values.defaults.probes.periodSeconds }}
+            timeoutSeconds: {{ $.Values.defaults.probes.timeoutSeconds }}
+            failureThreshold: {{ $.Values.defaults.probes.failureThreshold }}
+          resources:
+            {{- toYaml (default $.Values.defaults.resources $service.resources) | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+{{- end }}

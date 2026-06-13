@@ -1,0 +1,83 @@
+spring:
+  application:
+    name: circleguard-promotion-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/circleguard_promotion
+    username: admin
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  neo4j:
+    uri: bolt://localhost:7687
+    authentication:
+      username: neo4j
+      password: password
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: promotion-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+server:
+  port: 8088
+
+jwt:
+  secret: "my-super-secret-dev-key-32-chars-long-12345678"
+  expiration: 3600000
+
+# Actuator + Micrometer (US-10) ---------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  # Tracing (US-12) ---------------------------------------------------------
+  tracing:
+    sampling:
+      probability: ${MANAGEMENT_TRACING_SAMPLING_PROBABILITY:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:http://jaeger-collector.circleguard-observability:4318/v1/traces}
+
+# Business-metric simulator (US-10) -----------------------------------------
+circleguard:
+  metrics:
+    simulation:
+      enabled: ${CIRCLEGUARD_METRICS_SIMULATION_ENABLED:false}
+      interval-ms: 45000
+
+# Logging (US-11) -----------------------------------------------------------
+logging:
+  level:
+    root: INFO
+    com.circleguard: INFO
+  pattern:
+    correlation: "[%X{traceId:-},%X{spanId:-}] "

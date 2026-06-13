@@ -1,0 +1,41 @@
+{{- /*
+ServiceMonitor (US-10): tells the kube-prometheus-stack to scrape
+/actuator/prometheus on every CircleGuard microservice. Gated by
+`.Capabilities.APIVersions.Has` so the chart still installs cleanly on
+clusters where the Prometheus Operator CRDs are not yet present.
+*/}}
+{{- if .Capabilities.APIVersions.Has "monitoring.coreos.com/v1" }}
+{{- $root := . }}
+{{- range $serviceName, $service := .Values.services }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ $service.fullName }}
+  namespace: {{ $root.Values.global.namespace }}
+  labels:
+    {{- include "circleguard.serviceLabels" (dict "root" $root "serviceName" $serviceName "service" $service) | nindent 4 }}
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $service.fullName }}
+      app.kubernetes.io/instance: {{ $root.Release.Name }}
+  namespaceSelector:
+    matchNames:
+      - {{ $root.Values.global.namespace }}
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 30s
+      scrapeTimeout: 10s
+      honorLabels: true
+      relabelings:
+        - sourceLabels: [__meta_kubernetes_pod_name]
+          targetLabel: pod
+        - sourceLabels: [__meta_kubernetes_namespace]
+          targetLabel: namespace
+        - sourceLabels: [__meta_kubernetes_service_name]
+          targetLabel: kubernetes_service
+{{- end }}
+{{- end }}

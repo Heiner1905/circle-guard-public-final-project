@@ -1,0 +1,75 @@
+###############################################################################
+# Copy this file to terraform.tfvars and fill in the secret values before
+# running `terraform plan/apply`. terraform.tfvars is gitignored so secrets
+# never leave your laptop.
+###############################################################################
+
+# --- Azure (small SKUs for dev) ---------------------------------------------
+# La suscripción de despliegue (729bf021-4706-4651-bc17-b1a299ed9400) tiene
+# rol Contributor acotado al RG existente "CircleGuard" — NO se pueden crear
+# Resource Groups nuevos. Por eso este ambiente referencia el RG vía data
+# source. Si te dan acceso a otro RG, cambia este valor.
+azure_resource_group_name = "CircleGuard"
+azure_location            = "eastus"
+node_vm_size              = "standard_d2s_v7"
+node_min_count            = 2
+node_max_count            = 3
+acr_name                  = "acrcircleguarddev2"
+
+# --- Middleware secrets (REQUIRED) ------------------------------------------
+postgres_password   = "change-me-dev-pg"
+neo4j_password      = "change-me-dev-neo4j"
+redis_password      = "change-me-dev-redis"
+ldap_admin_password = "change-me-dev-ldap"
+
+middleware_persistence_size = "8Gi"
+
+# --- Observability (US-10) --------------------------------------------------
+enable_observability     = true
+grafana_admin_password   = "change-me-dev-grafana"
+# Absolute path; set to your checkout, e.g.
+# dashboards_path = "/home/<you>/.../circle-guard.../observability/dashboards"
+dashboards_path          = ""
+
+# --- Logging (US-11) --------------------------------------------------------
+enable_logging       = true
+loki_retention_hours = 72
+loki_storage_size    = "8Gi"
+enable_elk           = false
+
+# --- Tracing + Alerts (US-12) -----------------------------------------------
+enable_tracing           = true
+jaeger_memory_max_traces = 25000
+enable_alerts            = true
+
+# --- Security (US-15) -------------------------------------------------------
+# Selfsigned issuer is fine for dev; flip cluster_issuer_kind to "acme" + set
+# the ACME email to exercise real Let's Encrypt cert issuance.
+enable_security             = true
+application_namespace       = "circleguard"
+psa_enforce_level           = "baseline"
+psa_audit_level             = "restricted"
+psa_warn_level              = "restricted"
+enable_resource_quota       = true
+resource_quota_cpu_requests = "4"
+resource_quota_memory_requests = "8Gi"
+resource_quota_cpu_limits   = "8"
+resource_quota_memory_limits = "16Gi"
+resource_quota_pods         = 30
+enable_cert_manager         = true
+cert_manager_chart_version  = "v1.15.3"
+enable_cluster_issuer       = true
+cluster_issuer_kind         = "selfsigned"
+# cluster_issuer_acme_email = "ops@circleguard.example"
+# cluster_issuer_acme_server = "https://acme-staging-v02.api.letsencrypt.org/directory"
+
+# --- AKS API allowlist (opcional; vacío = abierto en dev) -------------------
+# Cuando configures un Bastion / VPN, poblar la lista y borrar la línea
+# AZU-0041 de .trivyignore en la raíz del repo.
+# api_server_authorized_ip_ranges = ["190.0.0.0/24"]
+
+# --- AWS multi-cloud (off by default, flip to true to provision EKS+ECR) ----
+enable_aws             = false
+aws_region             = "us-east-1"
+aws_node_instance_type = "t3.medium"
+aws_node_desired_size  = 2

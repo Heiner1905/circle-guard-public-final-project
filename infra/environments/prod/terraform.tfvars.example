@@ -1,0 +1,78 @@
+###############################################################################
+# Copy this file to terraform.tfvars and fill in the secret values before
+# running `terraform plan/apply`. terraform.tfvars is gitignored so secrets
+# never leave your laptop.
+###############################################################################
+
+# --- Azure (production SKUs) ------------------------------------------------
+azure_location = "eastus"
+node_vm_size   = "standard_d2s_v7"
+node_min_count = 3
+node_max_count = 6
+acr_name       = "acrcircleguardprod"
+
+# In prod consider promoting ACR to Premium for geo-replication and content trust:
+# acr_sku = "Premium"
+
+# --- Middleware secrets (REQUIRED, MUST be strong) --------------------------
+postgres_password   = "REPLACE-WITH-VAULT-VALUE"
+neo4j_password      = "REPLACE-WITH-VAULT-VALUE"
+redis_password      = "REPLACE-WITH-VAULT-VALUE"
+ldap_admin_password = "REPLACE-WITH-VAULT-VALUE"
+
+middleware_persistence_size = "32Gi"
+
+# --- Observability (US-10) --------------------------------------------------
+enable_observability    = true
+grafana_admin_password  = "REPLACE-WITH-VAULT-VALUE"
+dashboards_path         = ""
+
+# --- Logging (US-11) --------------------------------------------------------
+# ELK off by default in prod too: ~4 GB RAM just for Elasticsearch. Flip on
+# only when central log search is actively needed beyond Grafana/Loki.
+enable_logging       = true
+loki_retention_hours = 336
+loki_storage_size    = "32Gi"
+enable_elk           = false
+
+# --- Tracing + Alerts (US-12) -----------------------------------------------
+# Jaeger runs in all-in-one + in-memory mode (academic scope). For true prod
+# scale, swap to distributed mode with an Elasticsearch backend (the existing
+# ECK release in k8s-logging covers it when enable_elk = true).
+enable_tracing           = true
+jaeger_memory_max_traces = 100000
+enable_alerts            = true
+
+# --- Security (US-15) -------------------------------------------------------
+# ACME with Let's Encrypt PRODUCTION - hits the real rate limits (50 certs per
+# registered domain per week). Set cluster_issuer_acme_email before applying.
+enable_security             = true
+application_namespace       = "circleguard"
+psa_enforce_level           = "baseline"
+psa_audit_level             = "restricted"
+psa_warn_level              = "restricted"
+enable_resource_quota       = true
+resource_quota_cpu_requests = "16"
+resource_quota_memory_requests = "32Gi"
+resource_quota_cpu_limits   = "32"
+resource_quota_memory_limits = "64Gi"
+resource_quota_pods         = 80
+enable_cert_manager         = true
+cert_manager_chart_version  = "v1.15.3"
+enable_cluster_issuer       = true
+cluster_issuer_kind         = "acme"
+cluster_issuer_acme_email   = "REPLACE-WITH-OPS-EMAIL"
+cluster_issuer_acme_server  = "https://acme-v02.api.letsencrypt.org/directory"
+
+# --- AKS API allowlist (OBLIGATORIO en producción) --------------------------
+# Sin esto el API server queda abierto a internet. Poblar con CIDR
+# corporativo / VNet de Bastion y BORRAR la línea AZU-0041 de .trivyignore.
+# api_server_authorized_ip_ranges = ["190.0.0.0/24", "200.1.2.0/24"]
+
+# --- AWS multi-cloud --------------------------------------------------------
+# Off by default. For prod multi-cloud, expect significant cost (~$72/mo just for
+# EKS control plane). Enable only when actively demoing or running DR drills.
+enable_aws             = false
+aws_region             = "us-east-1"
+aws_node_instance_type = "t3.medium"
+aws_node_desired_size  = 3

@@ -1,0 +1,199 @@
+name: CD · Terraform
+
+on:
+  pull_request:
+    branches: [dev, main, master]
+    paths:
+      - "infra/**"
+      - ".github/workflows/cd-terraform.yml"
+  push:
+    branches: [dev, main, master]
+    paths:
+      - "infra/**"
+      - ".github/workflows/cd-terraform.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to plan/apply
+        type: choice
+        options: [dev, stage, prod]
+        required: true
+      apply:
+        description: Run terraform apply (otherwise plan only)
+        type: boolean
+        default: false
+
+concurrency:
+  group: cd-terraform-${{ github.ref }}-${{ inputs.environment || github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TF_VERSION: "1.9.5"
+  TF_IN_AUTOMATION: "true"
+  ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+  ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+  ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: us-east-1
+
+jobs:
+  resolve-env:
+    name: Resolve target environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      do_apply: ${{ steps.env.outputs.do_apply }}
+    steps:
+      - name: Pick environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            env="${{ inputs.environment }}"
+            apply="${{ inputs.apply }}"
+          else
+            case "${{ github.base_ref || github.ref_name }}" in
+              dev)    env="dev" ;;
+              main)   env="stage" ;;
+              master) env="prod" ;;
+              *)      env="dev" ;;
+            esac
+            if [ "${{ github.event_name }}" = "push" ]; then
+              apply="true"
+            else
+              apply="false"
+            fi
+          fi
+          echo "environment=${env}" >> "$GITHUB_OUTPUT"
+          echo "do_apply=${apply}" >> "$GITHUB_OUTPUT"
+
+  fmt-validate:
+    name: terraform fmt & validate
+    needs: resolve-env
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: terraform fmt -check
+        run: terraform -chdir=infra fmt -check -recursive
+
+      - name: terraform validate (env)
+        working-directory: infra/environments/${{ needs.resolve-env.outputs.environment }}
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+  plan:
+    name: terraform plan (${{ needs.resolve-env.outputs.environment }})
+    needs: [resolve-env, fmt-validate]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve-env.outputs.environment }}
+    defaults:
+      run:
+        working-directory: infra/environments/${{ needs.resolve-env.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: terraform init
+        run: terraform init -input=false -backend-config=backend.hcl
+
+      - name: Write secrets tfvars
+        run: |
+          cat > ci.auto.tfvars <<EOF
+          postgres_password      = "${{ secrets.PG_PASSWORD }}"
+          neo4j_password         = "${{ secrets.NEO4J_PASSWORD }}"
+          redis_password         = "${{ secrets.REDIS_PASSWORD }}"
+          ldap_admin_password    = "${{ secrets.LDAP_ADMIN_PASSWORD }}"
+          grafana_admin_password = "${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
+          enable_aws             = false
+          enable_tracing         = false
+
+          EOF
+
+      - name: terraform plan
+        id: plan
+        run: terraform plan -input=false -no-color -out=tfplan
+        continue-on-error: true
+
+      - name: Upload plan
+        if: steps.plan.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ needs.resolve-env.outputs.environment }}-${{ github.run_id }}
+          path: infra/environments/${{ needs.resolve-env.outputs.environment }}/tfplan
+          retention-days: 7
+
+      - name: Comment plan on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const env = "${{ needs.resolve-env.outputs.environment }}";
+            const outcome = "${{ steps.plan.outcome }}";
+            const body = `### Terraform plan · \`${env}\`\n\nOutcome: **${outcome}**\n\nFull plan available in run artifacts.`;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+
+      - name: Fail if plan errored
+        if: steps.plan.outcome != 'success'
+        run: exit 1
+
+  apply:
+    name: terraform apply (${{ needs.resolve-env.outputs.environment }})
+    needs: [resolve-env, plan]
+    if: needs.resolve-env.outputs.do_apply == 'true' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.resolve-env.outputs.environment }}
+    defaults:
+      run:
+        working-directory: infra/environments/${{ needs.resolve-env.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: terraform init
+        run: terraform init -input=false -backend-config=backend.hcl
+
+      - name: Write secrets tfvars
+        run: |
+          cat > ci.auto.tfvars <<EOF
+          postgres_password      = "${{ secrets.PG_PASSWORD }}"
+          neo4j_password         = "${{ secrets.NEO4J_PASSWORD }}"
+          redis_password         = "${{ secrets.REDIS_PASSWORD }}"
+          ldap_admin_password    = "${{ secrets.LDAP_ADMIN_PASSWORD }}"
+          grafana_admin_password = "${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
+          enable_aws             = false
+          enable_tracing         = false
+          EOF
+
+      - name: Remove problematic resources from state
+        run: |
+          echo "Removing ACR role assignment from state..."
+          terraform state rm module.acr.azurerm_role_assignment.acr_pull 2>/dev/null || true
+          echo "State cleanup completed"
+
+      - name: terraform plan (new)
+        run: terraform plan -input=false -no-color -out=tfplan
+
+      - name: terraform apply
+        run: terraform apply -input=false -auto-approve tfplan
