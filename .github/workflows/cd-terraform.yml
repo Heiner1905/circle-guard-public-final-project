@@ -218,10 +218,5 @@ jobs:
           if [[ "$ENV" == "dev" ]]; then
             terraform apply -input=false -auto-approve tfplan
           else
-            terraform apply -input=false -auto-approve \
-              -var="enable_observability=false" \
-              -var="enable_logging=false" \
-              -var="enable_tracing=false" \
-              -var="enable_security=false" \
-              tfplan
+            terraform apply -input=false -auto-approve tfplan
           fi
