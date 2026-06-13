@@ -68,12 +68,4 @@ output "psa_levels" {
   value       = var.enable_security ? module.security[0].psa_levels : null
 }
 
-output "aws_eks_cluster" {
-  description = "Name of the EKS cluster (only when enable_aws=true)."
-  value       = var.enable_aws ? module.aws_eks[0].cluster_name : null
-}
 
-output "aws_ecr_repository_urls" {
-  description = "Map of microservice short name to ECR repo URL (only when enable_aws=true)."
-  value       = var.enable_aws ? module.aws_ecr[0].repository_urls : null
-}
