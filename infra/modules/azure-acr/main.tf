@@ -19,9 +19,9 @@ resource "azurerm_container_registry" "this" {
 }
 
 # Allow AKS kubelet to pull images from this registry without storing imagePullSecrets.
-resource "azurerm_role_assignment" "acr_pull" {
-  scope                            = azurerm_container_registry.this.id
-  role_definition_name             = "AcrPull"
-  principal_id                     = var.aks_kubelet_identity_object_id
-  skip_service_principal_aad_check = true
-}
+# resource "azurerm_role_assignment" "acr_pull" {
+#   scope                            = azurerm_container_registry.this.id
+#   role_definition_name             = "AcrPull"
+#   principal_id                     = var.aks_kubelet_identity_object_id
+#   skip_service_principal_aad_check = true
+# }
