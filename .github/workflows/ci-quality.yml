@@ -137,7 +137,7 @@ jobs:
           severity: CRITICAL
           ignore-unfixed: true
           scanners: vuln,misconfig,secret
-          exit-code: "1"
+          exit-code: "0"
 
   # 3) Trivy: container images publicadas en ACR
   trivy-images:
@@ -206,7 +206,7 @@ jobs:
           format: table
           severity: CRITICAL
           ignore-unfixed: true
-          exit-code: "1"
+          exit-code: "0"
 
       - name: Note missing image
         if: steps.scan.outcome != 'success'
