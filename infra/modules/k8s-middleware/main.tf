@@ -132,7 +132,7 @@ resource "helm_release" "kafka" {
 resource "helm_release" "redis" {
   name       = "redis"
   namespace  = kubernetes_namespace.middleware.metadata[0].name
-  repository = "oci://registry-1.docker.io/bitnamicharts"  # Cambiado
+  repository = "oci://registry-1.docker.io/bitnamicharts" # Cambiado
   chart      = "redis"
   version    = "27.0.8"
 
