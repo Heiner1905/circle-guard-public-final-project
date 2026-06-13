@@ -213,10 +213,11 @@ jobs:
           fi
 
       - name: terraform apply
+        if: needs.resolve-env.outputs.do_apply == 'true' && github.event_name != 'pull_request'
         run: |
           ENV="${{ needs.resolve-env.outputs.environment }}"
           if [[ "$ENV" == "dev" ]]; then
             terraform apply -input=false -auto-approve tfplan
           else
-            terraform apply -input=false -auto-approve tfplan
+            echo "No se aplican cambios en stage/prod (los recursos ya existen en dev)"
           fi

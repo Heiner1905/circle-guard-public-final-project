@@ -18,25 +18,22 @@ provider "azurerm" {
 # Azure: usar recursos existentes de dev
 # ----------------------------------------------------------------------------
 
-# Usar el resource group existente de dev
 data "azurerm_resource_group" "this" {
   name = "CircleGuard"
 }
 
-# Usar el AKS cluster existente de dev
 data "azurerm_kubernetes_cluster" "this" {
   name                = "aks-circleguard-dev"
   resource_group_name = data.azurerm_resource_group.this.name
 }
 
-# Usar el ACR existente de dev
 data "azurerm_container_registry" "this" {
   name                = "acrcircleguarddev2"
   resource_group_name = data.azurerm_resource_group.this.name
 }
 
 # ----------------------------------------------------------------------------
-# Kubernetes / Helm providers — usando el cluster existente
+# Kubernetes / Helm providers
 # ----------------------------------------------------------------------------
 
 locals {
@@ -61,103 +58,4 @@ provider "helm" {
     client_certificate     = local.kube_cert
     client_key             = local.kube_key
   }
-}
-
-# ----------------------------------------------------------------------------
-# Nota: Los módulos de network, aks y acr no se necesitan porque se usan
-# los recursos existentes de dev.
-# ----------------------------------------------------------------------------
-
-module "middleware" {
-  source = "../../modules/k8s-middleware"
-
-  namespace        = var.middleware_namespace
-  persistence_size = var.middleware_persistence_size
-
-  postgres_username   = var.postgres_username
-  postgres_password   = var.postgres_password
-  postgres_database   = var.postgres_database
-  neo4j_password      = var.neo4j_password
-  redis_password      = var.redis_password
-  ldap_admin_user     = var.ldap_admin_user
-  ldap_admin_password = var.ldap_admin_password
-  ldap_domain         = var.ldap_domain
-}
-
-# ----------------------------------------------------------------------------
-# Observability stack (kube-prometheus-stack + Grafana dashboards).
-# ----------------------------------------------------------------------------
-
-module "observability" {
-  source = "../../modules/k8s-observability"
-  count  = var.enable_observability ? 1 : 0
-
-  namespace                = var.observability_namespace
-  grafana_admin_user       = var.grafana_admin_user
-  grafana_admin_password   = var.grafana_admin_password
-  prometheus_retention     = var.prometheus_retention
-  prometheus_storage_size  = var.prometheus_storage_size
-  grafana_persistence_size = var.grafana_persistence_size
-  dashboards_path          = var.dashboards_path
-}
-
-# ----------------------------------------------------------------------------
-# Logging stack (Loki + Promtail, optional ECK).
-# ----------------------------------------------------------------------------
-
-module "logging" {
-  source = "../../modules/k8s-logging"
-  count  = var.enable_logging ? 1 : 0
-
-  namespace              = var.observability_namespace
-  create_namespace       = false
-  loki_retention_hours   = var.loki_retention_hours
-  loki_storage_size      = var.loki_storage_size
-  enable_elk             = var.enable_elk
-  tracing_datasource_uid = var.enable_tracing ? "jaeger" : ""
-}
-
-# ----------------------------------------------------------------------------
-# Tracing stack (Jaeger all-in-one + Alertmanager rules via PrometheusRule).
-# ----------------------------------------------------------------------------
-
-module "tracing" {
-  source = "../../modules/k8s-tracing"
-  count  = var.enable_tracing ? 1 : 0
-
-  namespace                = var.observability_namespace
-  create_namespace         = false
-  jaeger_memory_max_traces = var.jaeger_memory_max_traces
-  enable_alerts            = var.enable_alerts
-}
-
-# ----------------------------------------------------------------------------
-# Security stack
-# ----------------------------------------------------------------------------
-
-module "security" {
-  source = "../../modules/k8s-security"
-  count  = var.enable_security ? 1 : 0
-
-  circleguard_namespace = var.application_namespace
-
-  psa_enforce_level = var.psa_enforce_level
-  psa_audit_level   = var.psa_audit_level
-  psa_warn_level    = var.psa_warn_level
-
-  enable_resource_quota          = var.enable_resource_quota
-  resource_quota_cpu_requests    = var.resource_quota_cpu_requests
-  resource_quota_memory_requests = var.resource_quota_memory_requests
-  resource_quota_cpu_limits      = var.resource_quota_cpu_limits
-  resource_quota_memory_limits   = var.resource_quota_memory_limits
-  resource_quota_pods            = var.resource_quota_pods
-
-  enable_cert_manager        = var.enable_cert_manager
-  cert_manager_chart_version = var.cert_manager_chart_version
-
-  enable_cluster_issuer             = var.enable_cluster_issuer
-  cluster_issuer_kind               = var.cluster_issuer_kind
-  cluster_issuer_acme_email         = var.cluster_issuer_acme_email
-  cluster_issuer_acme_server        = var.cluster_issuer_acme_server
-  cluster_issuer_acme_ingress_class = var.cluster_issuer_acme_ingress_class
 }
