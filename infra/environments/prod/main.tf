@@ -71,7 +71,6 @@ provider "helm" {
 module "middleware" {
   source = "../../modules/k8s-middleware"
 
-  create_namespace = false # El namespace ya existe en dev
   namespace        = var.middleware_namespace
   persistence_size = var.middleware_persistence_size
 
