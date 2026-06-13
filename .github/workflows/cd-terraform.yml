@@ -110,18 +110,19 @@ jobs:
       - name: terraform init
         run: terraform init -input=false -backend-config=backend.hcl
 
-      - name: Use terraform.tfvars
-        run: |
-          if [ -f terraform.tfvars ]; then
-            echo "terraform.tfvars found, will be used automatically"
-            cat terraform.tfvars | grep -v "password" || true
-          else
-            echo "Warning: terraform.tfvars not found"
-          fi
+      - name: terraform init
+        run: terraform init -input=false -backend-config=backend.hcl
 
       - name: terraform plan
         id: plan
-        run: terraform plan -input=false -no-color -out=tfplan
+        run: |
+          if [ -f terraform.auto.tfvars ]; then
+            terraform plan -input=false -no-color -out=tfplan
+          elif [ -f terraform.tfvars ]; then
+            terraform plan -input=false -no-color -out=tfplan -var-file=terraform.tfvars
+          else
+            terraform plan -input=false -no-color -out=tfplan
+          fi
         continue-on-error: true
 
       - name: Upload plan
