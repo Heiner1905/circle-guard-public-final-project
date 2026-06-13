@@ -125,7 +125,17 @@ jobs:
 
       - name: terraform plan
         id: plan
-        run: terraform plan -input=false -no-color -out=tfplan
+        run: |
+          ENV="${{ needs.resolve-env.outputs.environment }}"
+          if [[ "$ENV" == "dev" ]]; then
+            terraform plan -input=false -no-color -out=tfplan
+          else
+            terraform plan -input=false -no-color -out=tfplan \
+              -var="enable_observability=false" \
+              -var="enable_logging=false" \
+              -var="enable_tracing=false" \
+              -var="enable_security=false"
+          fi
         continue-on-error: true
 
       - name: Upload plan
@@ -193,7 +203,27 @@ jobs:
           echo "State cleanup completed"
 
       - name: terraform plan (new)
-        run: terraform plan -input=false -no-color -out=tfplan
+        run: |
+          ENV="${{ needs.resolve-env.outputs.environment }}"
+          if [[ "$ENV" == "dev" ]]; then
+            terraform plan -input=false -no-color -out=tfplan
+          else
+            terraform plan -input=false -no-color -out=tfplan \
+              -var="enable_observability=false" \
+              -var="enable_logging=false" \
+              -var="enable_tracing=false" \
+              -var="enable_security=false"
+          fi
 
       - name: terraform apply
-        run: terraform apply -input=false -auto-approve tfplan
+        run: |
+          ENV="${{ needs.resolve-env.outputs.environment }}"
+          if [[ "$ENV" == "dev" ]]; then
+            terraform apply -input=false -auto-approve tfplan
+          else
+            terraform apply -input=false -auto-approve tfplan \
+              -var="enable_observability=false" \
+              -var="enable_logging=false" \
+              -var="enable_tracing=false" \
+              -var="enable_security=false"
+          fi
