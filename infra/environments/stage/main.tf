@@ -20,7 +20,7 @@ provider "azurerm" {
 
 # Usar el resource group existente de dev
 data "azurerm_resource_group" "this" {
-  name = "CircleGuard" # RG de dev
+  name = "CircleGuard"
 }
 
 # Usar el AKS cluster existente de dev
@@ -64,16 +64,16 @@ provider "helm" {
 }
 
 # ----------------------------------------------------------------------------
-# Nota: Los módulos de network, aks y acr NO se necesitan porque usamos
-# los recursos existentes de dev. Solo se despliega el middleware y
-# los stacks de observabilidad, logging, tracing y security.
+# Nota: Los módulos de network, aks y acr no se necesitan porque se usan
+# los recursos existentes de dev.
 # ----------------------------------------------------------------------------
 
 module "middleware" {
   source = "../../modules/k8s-middleware"
 
-  namespace        = var.middleware_namespace
-  persistence_size = var.middleware_persistence_size
+  create_namespace   = false  # El namespace ya existe en dev
+  namespace          = var.middleware_namespace
+  persistence_size   = var.middleware_persistence_size
 
   postgres_username   = var.postgres_username
   postgres_password   = var.postgres_password
@@ -93,7 +93,8 @@ module "observability" {
   source = "../../modules/k8s-observability"
   count  = var.enable_observability ? 1 : 0
 
-  namespace                = var.observability_namespace
+  create_namespace   = false  # El namespace ya existe en dev
+  namespace          = var.observability_namespace
   grafana_admin_user       = var.grafana_admin_user
   grafana_admin_password   = var.grafana_admin_password
   prometheus_retention     = var.prometheus_retention
@@ -140,7 +141,8 @@ module "security" {
   source = "../../modules/k8s-security"
   count  = var.enable_security ? 1 : 0
 
-  circleguard_namespace = var.application_namespace
+  create_namespace        = false  # El namespace cert-manager ya existe
+  circleguard_namespace   = var.application_namespace
 
   psa_enforce_level = var.psa_enforce_level
   psa_audit_level   = var.psa_audit_level
