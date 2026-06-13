@@ -171,20 +171,29 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      - name: Download plan artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan-${{ needs.resolve-env.outputs.environment }}-${{ github.run_id }}
-          path: infra/environments/${{ needs.resolve-env.outputs.environment }}
-
       - name: terraform init
         run: terraform init -input=false -backend-config=backend.hcl
+
+      - name: Write secrets tfvars
+        run: |
+          cat > ci.auto.tfvars <<EOF
+          postgres_password      = "${{ secrets.PG_PASSWORD }}"
+          neo4j_password         = "${{ secrets.NEO4J_PASSWORD }}"
+          redis_password         = "${{ secrets.REDIS_PASSWORD }}"
+          ldap_admin_password    = "${{ secrets.LDAP_ADMIN_PASSWORD }}"
+          grafana_admin_password = "${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
+          enable_aws             = false
+          enable_tracing         = false
+          EOF
 
       - name: Remove problematic resources from state
         run: |
           echo "Removing ACR role assignment from state..."
           terraform state rm module.acr.azurerm_role_assignment.acr_pull 2>/dev/null || true
           echo "State cleanup completed"
+
+      - name: terraform plan (new)
+        run: terraform plan -input=false -no-color -out=tfplan
 
       - name: terraform apply
         run: terraform apply -input=false -auto-approve tfplan
