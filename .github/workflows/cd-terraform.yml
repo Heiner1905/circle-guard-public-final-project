@@ -113,10 +113,11 @@ jobs:
       - name: Write secrets tfvars
         run: |
           cat > ci.auto.tfvars <<EOF
-          postgres_password   = "${{ secrets.PG_PASSWORD }}"
-          neo4j_password      = "${{ secrets.NEO4J_PASSWORD }}"
-          redis_password      = "${{ secrets.REDIS_PASSWORD }}"
-          ldap_admin_password = "${{ secrets.LDAP_ADMIN_PASSWORD }}"
+          postgres_password      = "${{ secrets.PG_PASSWORD }}"
+          neo4j_password         = "${{ secrets.NEO4J_PASSWORD }}"
+          redis_password         = "${{ secrets.REDIS_PASSWORD }}"
+          ldap_admin_password    = "${{ secrets.LDAP_ADMIN_PASSWORD }}"
+          grafana_admin_password = "${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
           EOF
 
       - name: terraform plan
