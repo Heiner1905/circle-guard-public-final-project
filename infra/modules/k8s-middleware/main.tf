@@ -1,18 +1,3 @@
-terraform {
-  required_version = ">= 1.5.0"
-
-  required_providers {
-    kubernetes = {
-      source  = "hashicorp/kubernetes"
-      version = "~> 2.31"
-    }
-    helm = {
-      source  = "hashicorp/helm"
-      version = "~> 2.14"
-    }
-  }
-}
-
 resource "kubernetes_namespace" "middleware" {
   metadata {
     name = var.namespace
@@ -26,9 +11,9 @@ resource "kubernetes_namespace" "middleware" {
 resource "helm_release" "postgresql" {
   name       = "postgresql"
   namespace  = kubernetes_namespace.middleware.metadata[0].name
-  repository = "https://charts.bitnami.com/bitnami"
+  repository = "oci://registry-1.docker.io/bitnamicharts"
   chart      = "postgresql"
-  version    = "15.5.20"
+  version    = "18.7.3"
 
   values = [yamlencode({
     auth = {
@@ -40,6 +25,16 @@ resource "helm_release" "postgresql" {
     primary = {
       persistence = {
         size = var.persistence_size
+      }
+      resources = {
+        requests = {
+          cpu    = "50m"
+          memory = "256Mi"
+        }
+        limits = {
+          cpu    = "500m"
+          memory = "512Mi"
+        }
       }
     }
   })]
@@ -58,6 +53,16 @@ resource "helm_release" "neo4j" {
       password               = var.neo4j_password
       edition                = "community"
       acceptLicenseAgreement = "yes"
+      resources = {
+        requests = {
+          cpu    = "500m"
+          memory = "2Gi"
+        }
+        limits = {
+          cpu    = "1000m"
+          memory = "4Gi"
+        }
+      }
     }
     volumes = {
       data = {
@@ -75,11 +80,19 @@ resource "helm_release" "neo4j" {
 resource "helm_release" "kafka" {
   name       = "kafka"
   namespace  = kubernetes_namespace.middleware.metadata[0].name
-  repository = "https://charts.bitnami.com/bitnami"
+  repository = "oci://registry-1.docker.io/bitnamicharts"
   chart      = "kafka"
-  version    = "30.0.4"
+  version    = "29.3.6"
 
   values = [yamlencode({
+    image = {
+      registry   = "docker.io"
+      repository = "bitnamilegacy/kafka"
+      tag        = "3.7.1-debian-12-r0"
+    }
+    volumePermissions = {
+      enabled = false
+    }
     listeners = {
       client = {
         protocol = "PLAINTEXT"
@@ -92,9 +105,26 @@ resource "helm_release" "kafka" {
       }
     }
     controller = {
+      replicaCount = 1
       persistence = {
         size = var.persistence_size
       }
+      resources = {
+        requests = {
+          cpu    = "100m"
+          memory = "512Mi"
+        }
+        limits = {
+          cpu    = "500m"
+          memory = "768Mi"
+        }
+      }
+    }
+    broker = {
+      replicaCount = 0
+    }
+    zookeeper = {
+      enabled = false
     }
   })]
 }
@@ -102,9 +132,9 @@ resource "helm_release" "kafka" {
 resource "helm_release" "redis" {
   name       = "redis"
   namespace  = kubernetes_namespace.middleware.metadata[0].name
-  repository = "https://charts.bitnami.com/bitnami"
+  repository = "oci://registry-1.docker.io/bitnamicharts"  # Cambiado
   chart      = "redis"
-  version    = "20.0.3"
+  version    = "27.0.8"
 
   values = [yamlencode({
     auth = {
@@ -114,15 +144,19 @@ resource "helm_release" "redis" {
       persistence = {
         size = var.persistence_size
       }
+      resources = {
+        requests = {
+          cpu    = "50m"
+          memory = "256Mi"
+        }
+      }
     }
     replica = {
-      replicaCount = 1
-      persistence = {
-        size = var.persistence_size
-      }
+      replicaCount = 0
     }
   })]
 }
+
 
 resource "helm_release" "openldap" {
   name       = "openldap"
@@ -140,6 +174,22 @@ resource "helm_release" "openldap" {
     replicaCount = 1
     persistence = {
       size = var.persistence_size
+    }
+    "ltb-passwd" = {
+      enabled = false
+    }
+    "phpldapadmin" = {
+      enabled = true
+    }
+    resources = {
+      requests = {
+        cpu    = "25m"
+        memory = "128Mi"
+      }
+      limits = {
+        cpu    = "200m"
+        memory = "256Mi"
+      }
     }
   })]
 }
