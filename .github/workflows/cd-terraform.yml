@@ -110,19 +110,18 @@ jobs:
       - name: terraform init
         run: terraform init -input=false -backend-config=backend.hcl
 
-      - name: terraform init
-        run: terraform init -input=false -backend-config=backend.hcl
+      - name: Write secrets tfvars
+        run: |
+          cat > ci.auto.tfvars <<EOF
+          postgres_password   = "${{ secrets.PG_PASSWORD }}"
+          neo4j_password      = "${{ secrets.NEO4J_PASSWORD }}"
+          redis_password      = "${{ secrets.REDIS_PASSWORD }}"
+          ldap_admin_password = "${{ secrets.LDAP_ADMIN_PASSWORD }}"
+          EOF
 
       - name: terraform plan
         id: plan
-        run: |
-          if [ -f terraform.auto.tfvars ]; then
-            terraform plan -input=false -no-color -out=tfplan
-          elif [ -f terraform.tfvars ]; then
-            terraform plan -input=false -no-color -out=tfplan -var-file=terraform.tfvars
-          else
-            terraform plan -input=false -no-color -out=tfplan
-          fi
+        run: terraform plan -input=false -no-color -out=tfplan
         continue-on-error: true
 
       - name: Upload plan
